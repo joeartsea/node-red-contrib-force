@@ -65,30 +65,30 @@ module.exports = function (RED) {
           node.send(msg);
         };
         this.forceConfig.login(function (conn) {
-          if (typeof msg.topic === 'string') {
+          if (typeof msg.payload === 'string') {
             switch (node.operation) {
               case 'query':
-                conn.query(msg.topic, node.sendMsg);
+                conn.query(msg.payload, node.sendMsg);
                 break;
               case 'create':
                 conn.sobject(node.sobject)
-                  .create(JSON.parse(msg.topic), node.sendMsg);
+                  .create(JSON.parse(msg.payload), node.sendMsg);
                 break;
               case 'update':
                 conn.sobject(node.sobject)
-                  .update(JSON.parse(msg.topic), node.sendMsg);
+                  .update(JSON.parse(msg.payload), node.sendMsg);
                 break;
               case 'upsert':
                 conn.sobject(node.sobject)
-                  .upsert(JSON.parse(msg.topic), node.extname, node.sendMsg);
+                  .upsert(JSON.parse(msg.payload), node.extname, node.sendMsg);
                 break;
               case 'delete':
                 conn.sobject(node.sobject)
-                  .destroy(msg.topic, node.sendMsg);
+                  .destroy(msg.payload, node.sendMsg);
                 break;
             }
           } else {
-            node.error('msg.topic : the query is not defined as a string');
+            node.error('msg.payload : the query is not defined as a string');
           }
         });
       });
