@@ -1,0 +1,85 @@
+<!--
+  Copyright 2014 Atsushi Kojo.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="force-bulk in">
+  <div class="form-row">
+    <label for="node-input-force"><i class="fa fa-user"></i> Log in as</label>
+    <input type="text" id="node-input-force">
+  </div>
+  <div class="form-row">
+    <label for="node-input-operation"><i class="fa fa-wrench"></i> Operation</label>
+    <select type="text" id="node-input-operation">
+<!--      <option value="query">query</option>-->
+      <option value="load">load</option>
+<!--      <option value="update">update</option>-->
+<!--      <option value="upsert">upsert</option>-->
+<!--      <option value="delete">delete</option>-->
+    </select>
+  </div>
+  <div class="form-row input-sobject-row hidden">
+    <label for="node-input-sobject"><i class="fa fa-table"></i> Sobject</label>
+    <input type="text" id="node-input-sobject" placeholder="Sobject">
+  </div>
+  <div class="form-row input-extname-row hidden">
+    <label for="node-input-extname"><i class="fa fa-table"></i> External ID field name</label>
+    <input type="text" id="node-input-extname" placeholder="External ID field name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('force-bulk in', {
+    category: 'storage-input',
+    color: "#48ace4",
+    defaults: {
+      force: { type: 'force', required: true },
+      operation: { value: 'load' },
+      sobject: { value: '' },
+      extname: { value: '' },
+      name: { value: '' }
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'force.png',
+    label: function () {
+      var forceNode = RED.nodes.node(this.force);
+      return this.name || 'force-bulk';
+    },
+    labelStyle: function () {
+      return this.name ? 'node_label_italic' : '';
+    },
+    oneditprepare: function () {
+      var extel = $(".input-extname-row");
+      var sobjel = $(".input-sobject-row");
+      $("#node-input-operation").change(function () {
+        var id = $("#node-input-operation option:selected").val();
+        if (id == 'query') {
+          extel.hide();
+          sobjel.hide();
+        } else if (id == 'upsert') {
+          extel.show();
+          sobjel.show();
+        } else {
+          extel.hide();
+          sobjel.show();
+        }
+      });
+    }
+  });
+</script>
