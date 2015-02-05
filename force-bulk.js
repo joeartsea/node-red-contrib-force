@@ -23,8 +23,8 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, n);
     this.force = n.force;
     this.sobject = n.sobject;
-    this.extname = n.extname;
     this.operation = n.operation;
+    this.polltimeout = n.polltimeout;
     this.forceConfig = RED.nodes.getNode(this.force);
 
     if (this.forceConfig) {
@@ -36,30 +36,15 @@ module.exports = function (RED) {
             node.status({ fill: 'red', shape: 'ring', text: 'failed' });
           }
           node.status({});
-          msg.payload = result
+          msg.payload = result;
           node.send(msg);
         };
         this.forceConfig.login(function (conn) {
           if (typeof msg.payload === 'string') {
             switch (node.operation) {
-              case 'query':
-//                conn.query(msg.payload, node.sendMsg);
-                break;
               case 'load':
-                conn.bulk.pollTimeout = 100000;
+                conn.bulk.pollTimeout = node.polltimeout || 10000;
                 conn.bulk.load(node.sobject, "insert", JSON.parse(msg.payload), node.sendMsg);
-                break;
-              case 'update':
-//                conn.sobject(node.sobject)
-//                  .update(JSON.parse(msg.payload), node.sendMsg);
-                break;
-              case 'upsert':
-//                conn.sobject(node.sobject)
-//                  .upsert(JSON.parse(msg.payload), node.extname, node.sendMsg);
-                break;
-              case 'delete':
-//                conn.sobject(node.sobject)
-//                  .destroy(msg.payload, node.sendMsg);
                 break;
             }
           } else {
