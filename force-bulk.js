@@ -51,7 +51,7 @@ module.exports = function (RED) {
                 msg.payload = 'query result saved.' + localname;
                 node.send(msg);
                 break;
-              case 'load':
+              case 'insert':
                 conn.bulk.pollTimeout = node.polltimeout || 10000;
                 conn.bulk.load(node.sobject, "insert", JSON.parse(msg.payload), node.sendMsg);
                 break;

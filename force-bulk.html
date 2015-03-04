@@ -22,8 +22,8 @@
   <div class="form-row">
     <label for="node-input-operation"><i class="fa fa-wrench"></i> Operation</label>
     <select type="text" id="node-input-operation">
-      <option value="load">load</option>
       <option value="query">query</option>
+      <option value="insert">insert</option>
       <option value="update">update</option>
       <option value="upsert">upsert</option>
       <option value="delete">delete</option>
@@ -58,7 +58,7 @@
     color: "#48ace4",
     defaults: {
       force: { type: 'force', required: true },
-      operation: { value: 'load' },
+      operation: { value: 'insert' },
       sobject: { value: '' },
       extname: { value: '' },
       polltimeout: { value: 10000 },
@@ -87,7 +87,7 @@
           extel.hide();
           toutl.hide();
           filel.show();
-        } else if(id == 'load') {
+        } else if(id == 'insert') {
           sobjel.show();
           extel.hide();
           toutl.show();
