@@ -51,44 +51,54 @@ module.exports = function (RED) {
     this.extname = n.extname;
     this.operation = n.operation;
     this.forceConfig = RED.nodes.getNode(this.force);
-
     if (this.forceConfig) {
       var node = this;
-      node.on('input', function (msg) {
-        this.sendMsg = function (err, result) {
-          if (err) {
-            node.error(err.toString());
-            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
-          }
-          node.status({});
-          msg.payload = result
-          node.send(msg);
-        };
-        this.forceConfig.login(function (conn) {
-          if (typeof msg.payload === 'string') {
-            switch (node.operation) {
-              case 'query':
-                conn.query(msg.payload, node.sendMsg);
-                break;
-              case 'create':
-                conn.sobject(node.sobject)
-                  .create(JSON.parse(msg.payload), node.sendMsg);
-                break;
-              case 'update':
-                conn.sobject(node.sobject)
-                  .update(JSON.parse(msg.payload), node.sendMsg);
-                break;
-              case 'upsert':
-                conn.sobject(node.sobject)
-                  .upsert(JSON.parse(msg.payload), node.extname, node.sendMsg);
-                break;
-              case 'delete':
-                conn.sobject(node.sobject)
-                  .destroy(msg.payload, node.sendMsg);
-                break;
-            }
+      node.convType = function (payload, targetType) {
+        if (typeof payload !== targetType) {
+          if (targetType == 'string') {
+            payload = JSON.stringify(payload);
           } else {
-            node.error('msg.payload : the query is not defined as a string');
+            payload = JSON.parse(payload);
+          }
+        }
+        return payload;
+      };
+      node.sendMsg = function (err, result) {
+        if (err) {
+          node.error(err.toString());
+          node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+        }
+        node.status({});
+        msg.payload = result
+        node.send(msg);
+      };
+      node.on('input', function (msg) {
+        this.forceConfig.login(function (conn) {
+          switch (node.operation) {
+            case 'query':
+              msg.payload = node.convType(msg.payload, 'string');
+              conn.query(msg.payload, node.sendMsg);
+              break;
+            case 'create':
+              msg.payload = node.convType(msg.payload, 'object');
+              conn.sobject(node.sobject)
+                .create(msg.payload, node.sendMsg);
+              break;
+            case 'update':
+              msg.payload = node.convType(msg.payload, 'object');
+              conn.sobject(node.sobject)
+                .update(msg.payload, node.sendMsg);
+              break;
+            case 'upsert':
+              msg.payload = node.convType(msg.payload, 'object');
+              conn.sobject(node.sobject)
+                .upsert(msg.payload, node.extname, node.sendMsg);
+              break;
+            case 'delete':
+              msg.payload = node.convType(msg.payload, 'object');
+              conn.sobject(node.sobject)
+                .destroy(msg.payload, node.sendMsg);
+              break;
           }
         });
       });
