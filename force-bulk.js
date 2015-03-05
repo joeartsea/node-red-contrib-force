@@ -18,6 +18,7 @@ module.exports = function (RED) {
   'use strict';
   var jsforce = require('jsforce');
   var request = require('request');
+  var fs = require('fs');
 
   function ForceBulkInNode(n) {
     RED.nodes.createNode(this, n);
@@ -25,6 +26,8 @@ module.exports = function (RED) {
     this.sobject = n.sobject;
     this.operation = n.operation;
     this.polltimeout = n.polltimeout;
+    this.extname = n.extname;
+    this.localfilename = n.localfilename;
     this.forceConfig = RED.nodes.getNode(this.force);
 
     if (this.forceConfig) {
@@ -41,10 +44,27 @@ module.exports = function (RED) {
         };
         this.forceConfig.login(function (conn) {
           if (typeof msg.payload === 'string') {
+            var localname = node.localfilename || msg.localfilename || '';
             switch (node.operation) {
-              case 'load':
+              case 'query':
+                conn.bulk.query(msg.payload).stream().pipe(fs.createWriteStream(localname));
+                msg.payload = 'query result saved.' + localname;
+                node.send(msg);
+                break;
+              case 'insert':
                 conn.bulk.pollTimeout = node.polltimeout || 10000;
                 conn.bulk.load(node.sobject, "insert", JSON.parse(msg.payload), node.sendMsg);
+                break;
+              case 'upsert':
+                var extFieldName = node.extname || 'Id';
+                var csvFileIn = fs.createReadStream(localname);
+                conn.bulk.pollTimeout = node.polltimeout || 10000;
+                conn.bulk.load(node.sobject, "upsert", {'extIdField': extFieldName}, csvFileIn, node.sendMsg);
+                break;
+              default:
+                var csvFileIn = fs.createReadStream(localname);
+                conn.bulk.pollTimeout = node.polltimeout || 10000;
+                conn.bulk.load(node.sobject, node.operation, csvFileIn, node.sendMsg);
                 break;
             }
           } else {
