@@ -23,7 +23,8 @@
     <label for="node-input-operation"><i class="fa fa-wrench"></i> Operation</label>
     <select type="text" id="node-input-operation">
       <option value="query">query</option>
-      <option value="insert">insert</option>
+      <option value="insert_record">insert(Record)</option>
+      <option value="insert_csv">insert(CSV)</option>
       <option value="update">update</option>
       <option value="upsert">upsert</option>
       <option value="delete">delete</option>
@@ -58,7 +59,7 @@
     color: "#48ace4",
     defaults: {
       force: { type: 'force', required: true },
-      operation: { value: 'insert' },
+      operation: { value: 'query' },
       sobject: { value: '' },
       extname: { value: '' },
       polltimeout: { value: 10000 },
@@ -76,18 +77,23 @@
       return this.name ? 'node_label_italic' : '';
     },
     oneditprepare: function () {
+      var inNode = RED.nodes.node(this.id);
       var sobjel = $(".input-sobject-row");
       var extel = $(".input-extname-row");
       var toutl = $(".input-polltimeout-row");
       var filel = $(".input-localfilename-row");
       $("#node-input-operation").change(function () {
         var id = $("#node-input-operation option:selected").val();
+        if(id != inNode.operation){
+          $("#node-input-localfilename").val("");
+          $("#node-input-extname").val("");
+        }
         if (id == 'query') {
           sobjel.hide();
           extel.hide();
           toutl.hide();
           filel.show();
-        } else if(id == 'insert') {
+        } else if(id == 'insert_record') {
           sobjel.show();
           extel.hide();
           toutl.show();
