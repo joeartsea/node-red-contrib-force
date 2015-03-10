@@ -32,6 +32,26 @@ module.exports = function (RED) {
 
     if (this.forceConfig) {
       var node = this;
+      node.convType = function (payload, targetType) {
+        if (typeof payload !== targetType) {
+          if (targetType == 'string') {
+            payload = JSON.stringify(payload);
+          } else {
+            payload = JSON.parse(payload);
+          }
+        }
+        return payload;
+      };
+      node.readCsv = function(payload, csvFile){
+        if(csvFile){
+          payload = fs.createReadStream(csvFile);
+        } else if(toString.call(payload) === '[object Array]' && typeof payload[0] == 'string') {
+          payload = payload.join("\n");
+        } else if(typeof payload == 'string' && payload.lastIndexOf("[", 0) == 0) {
+          payload = node.convType(payload, 'object');
+        }
+        return payload;
+      };
       node.on('input', function (msg) {
         this.sendMsg = function (err, result) {
           if (err) {
@@ -43,32 +63,32 @@ module.exports = function (RED) {
           node.send(msg);
         };
         this.forceConfig.login(function (conn) {
-          if (typeof msg.payload === 'string') {
-            var localname = node.localfilename || msg.localfilename || '';
-            switch (node.operation) {
-              case 'query':
-                conn.bulk.query(msg.payload).stream().pipe(fs.createWriteStream(localname));
-                msg.payload = 'query result saved.' + localname;
-                node.send(msg);
-                break;
-              case 'insert':
-                conn.bulk.pollTimeout = node.polltimeout || 10000;
-                conn.bulk.load(node.sobject, "insert", JSON.parse(msg.payload), node.sendMsg);
-                break;
-              case 'upsert':
-                var extFieldName = node.extname || 'Id';
-                var csvFileIn = fs.createReadStream(localname);
-                conn.bulk.pollTimeout = node.polltimeout || 10000;
-                conn.bulk.load(node.sobject, "upsert", {'extIdField': extFieldName}, csvFileIn, node.sendMsg);
-                break;
-              default:
-                var csvFileIn = fs.createReadStream(localname);
-                conn.bulk.pollTimeout = node.polltimeout || 10000;
-                conn.bulk.load(node.sobject, node.operation, csvFileIn, node.sendMsg);
-                break;
-            }
-          } else {
-            node.error('msg.payload : the query is not defined as a string');
+          var localname = node.localfilename || msg.localfilename || '';
+          if(node.polltimeout) conn.bulk.pollTimeout = node.polltimeout;
+          switch (node.operation) {
+            case 'query':
+              msg.payload = node.convType(msg.payload, 'string');
+              conn.bulk.query(msg.payload).stream().pipe(fs.createWriteStream(localname));
+              msg.payload = 'query result saved.' + localname;
+              node.send(msg);
+              break;
+            case 'insert_record':
+              msg.payload = node.convType(msg.payload, 'object');
+              conn.bulk.load(node.sobject, "insert", msg.payload, node.sendMsg);
+              break;
+            case 'insert_csv':
+              var csvFileIn = node.readCsv(msg.payload, localname);
+              conn.bulk.load(node.sobject, "insert", csvFileIn, node.sendMsg);
+              break;
+            case 'upsert':
+              var extFieldName = node.extname || 'Id';
+              var csvFileIn = node.readCsv(msg.payload, localname);
+              conn.bulk.load(node.sobject, "upsert", {'extIdField': extFieldName}, csvFileIn, node.sendMsg);
+              break;
+            default:
+              var csvFileIn = node.readCsv(msg.payload, localname);
+              conn.bulk.load(node.sobject, node.operation, csvFileIn, node.sendMsg);
+              break;
           }
         });
       });
