@@ -1,0 +1,186 @@
+<!--
+  Copyright 2014 Atsushi Kojo.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="force-chatter in">
+  <div class="form-row">
+    <label for="node-input-force"><i class="fa fa-user"></i> Log in as</label>
+    <input type="text" id="node-input-force">
+  </div>
+  <div class="form-row">
+    <label for="node-input-operation"><i class="fa fa-wrench"></i> Operation</label>
+    <select type="text" id="node-input-operation">
+      <option value="get_feed">Get My Feed</option>
+      <option value="get_group">Get Group Feed</option>
+      <option value="search_feed">Search Feed</option>
+      <option value="post_feed">Post Feed</option>
+    </select>
+  </div>
+  <div class="form-row input-group-row hidden">
+    <label for="node-input-group"><i class="fa fa-group"></i> Group</label>
+    <select id="node-input-group" >
+    </select>
+  </div>
+  <div class="form-row input-query-row hidden">
+    <label for="node-input-query"><i class="fa fa-search"></i> Search string</label>
+    <input type="text" id="node-input-query" >
+  </div>
+  <div class="form-row input-mention-row hidden">
+    <label for="node-input-mention"><i class="fa fa-group"></i> @Mention</label>
+    <select id="node-input-mention" multiple="multiple" size="5">
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('force-chatter in', {
+    category: 'storage-input',
+    color: "#48ace4",
+    defaults: {
+      force: { type: 'force', required: true },
+      operation: { value: 'get_feed' },
+      group: { value: '' },
+      query: { value: '' },
+      mention: { value: '' },
+      name: { value: '' }
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'force.png',
+    label: function () {
+      var forceNode = RED.nodes.node(this.force);
+      return this.name || 'force-chatter';
+    },
+    labelStyle: function () {
+      return this.name ? 'node_label_italic' : '';
+    },
+    oneditprepare: function () {
+      chatterNode = RED.nodes.node(this.id);
+      var groupel = $(".input-group-row");
+      var queryel = $(".input-query-row");
+      var mentionel = $(".input-mention-row");
+      $("#node-input-operation").change(function () {
+        var id = $("#node-input-operation option:selected").val();
+        if(id != chatterNode.operation){
+          $("#node-input-group").val("");
+          $("#node-input-query").val("");
+          $("#node-input-mention").val("");
+        }
+        if (id == 'get_group') {
+          groupel.show();
+          queryel.hide();
+          mentionel.hide();
+          window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup,2000);
+        } else if(id == 'search_feed') {
+          groupel.hide();
+          queryel.show();
+          mentionel.hide();
+        } else if(id == 'post_feed') {
+          groupel.hide();
+          queryel.hide();
+          mentionel.show();
+          window.chatterNodeIntervalId = window.setTimeout(pollChatterMention,2000);
+        } else {
+          groupel.hide();
+          queryel.hide();
+          mentionel.hide();
+        }
+      });
+    },
+    oneditsave: function () {
+      var id = $("#node-input-operation option:selected").val();
+      if(id == 'post_feed') {
+        var selected = $("#node-input-mention").val();
+        if(selected){
+          chatterNode.mention = selected.join(",");
+        } else {
+          chatterNode.mention = "";
+        }
+      }
+    }
+  });
+
+  var chatterNode;
+  function updateGroupList(lists) {
+    var grouplist = $("#node-input-group");
+    grouplist.children("option").remove();
+    grouplist.append('<option value=""> == select Group == </option>');
+    $.each(lists.groups, function(i, opt){
+      grouplist.append('<option value="' + opt.id + '">' + opt.name + '</option>');
+    });
+    grouplist.val(chatterNode.group);
+  }
+
+  function pollChatterGroup() {
+    if(chatterNode.force){
+      $.getJSON('force-chatter/get-groups?id='+chatterNode.id+'&credentials='+chatterNode.force,
+        function(data) {
+          if (data) {
+            updateGroupList(data);
+            delete window.chatterNodeIntervalId;
+          } else {
+            window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup,2000);
+          }
+      });
+    }else{
+      window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup,2000);
+    }
+  }
+
+
+  function updateMentionList(lists) {
+    var mentionlist = $("#node-input-mention"),
+        users = lists.users,
+        groups = lists.groups,
+        opts = "";
+    mentionlist.children("optgroup").remove();
+
+    opts += '<optgroup label="Users">';
+    $.each(users.users, function(i, opt){
+      opts += '<option value="' + opt.id + '">' + opt.name + '</option>';
+    });
+    opts += '</optgroup>';
+
+    opts += '<optgroup label="Groups">';
+    $.each(groups.groups, function(i, opt){
+      opts += '<option value="' + opt.id + '">' + opt.name + '</option>';
+    });
+    opts += '</optgroup>';
+    mentionlist.append(opts);
+
+    mentionlist.val(chatterNode.mention.split(','));
+  }
+
+  function pollChatterMention() {
+    if(chatterNode.force){
+      $.getJSON('force-chatter/get-mentions?id='+chatterNode.id+'&credentials='+chatterNode.force,
+        function(data) {
+          if (data) {
+            updateMentionList(data);
+            delete window.chatterNodeIntervalId;
+          } else {
+            window.chatterNodeIntervalId = window.setTimeout(pollChatterMention,2000);
+          }
+      });
+    }else{
+      window.chatterNodeIntervalId = window.setTimeout(pollChatterMention,2000);
+    }
+  }
+
+</script>
