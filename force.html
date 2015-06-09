@@ -30,6 +30,19 @@
       <option value="https://test.salesforce.com">Sandbox(test.salesforce.com)</option>
     </select>
   </div>
+  <hr align="middle" >
+  <div class="form-row">
+    <label for="node-config-input-clientid"><i class="fa fa-bookmark"></i> Client Id</label>
+    <input type="password" id="node-config-input-clientid" />
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-clientsecret"><i class="fa fa-lock"></i> Client Secret</label>
+    <input type="password" id="node-config-input-clientsecret">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-redirecturl"><i class="fa fa-plug"></i> Callback URL</label>
+    <input type="text" id="node-config-input-redirecturl">
+  </div>
 </script>
 
 <script type="text/javascript">
@@ -38,10 +51,13 @@
     color: "#48ace4",
     defaults: {
       username: { value: '', required: true },
-      loginurl: { value: "https://login.salesforce.com" }
+      loginurl: { value: "https://login.salesforce.com" },
+      redirecturl: { value: '', required: true }
     },
     credentials: {
       password: { type: 'password', required: true },
+      clientid: { type: 'password', required: true },
+      clientsecret: { type: 'password', required: true }
     },
     label: function() {
       return this.username

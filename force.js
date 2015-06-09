@@ -24,7 +24,12 @@ module.exports = function (RED) {
     var node = this;
     var credentials = RED.nodes.getCredentials(n.id);
     var conn = new jsforce.Connection({
-      loginUrl: n.loginurl
+//      loginUrl: n.loginurl
+      oauth2 : {
+        clientId : credentials.clientid,
+        clientSecret : credentials.clientsecret,
+        redirectUri : n.redirecturl
+      }
     });
     this.login = function (callback) {
       conn.login(n.username, credentials.password, function (err, userInfo) {
@@ -40,7 +45,9 @@ module.exports = function (RED) {
 
   RED.nodes.registerType('force', ForceNode, {
     credentials: {
-      password: { type: 'password' }
+      password: { type: 'password' },
+      clientid: { type: 'password' },
+      clientsecret: { type: 'password' }
     }
   });
 
