@@ -15,13 +15,7 @@
 -->
 
 <script type="text/x-red" data-template-name="force">
-  <div class="form-row">
-    <label for="node-config-input-username"><i class="fa fa-bookmark"></i> User Name</label>
-    <input type="text" id="node-config-input-username" placeholder="example@example.com" />
-  </div>
-  <div class="form-row">
-    <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
-    <input type="password" id="node-config-input-password">
+  <div class="form-tips" id="node-config-force-tooltip">
   </div>
   <div class="form-row">
     <label for="node-config-input-loginurl"><i class="fa fa-plug"></i> Login URL</label>
@@ -30,18 +24,21 @@
       <option value="https://test.salesforce.com">Sandbox(test.salesforce.com)</option>
     </select>
   </div>
-  <hr align="middle" >
+  <div class="form-row">
+    <label for="node-config-input-username"><i class="fa fa-bookmark"></i> User Name</label>
+    <input type="text" id="node-config-input-username" placeholder="example@example.com" />
+  </div>
   <div class="form-row">
     <label for="node-config-input-clientid"><i class="fa fa-bookmark"></i> Client Id</label>
     <input type="password" id="node-config-input-clientid" />
   </div>
   <div class="form-row">
     <label for="node-config-input-clientsecret"><i class="fa fa-lock"></i> Client Secret</label>
-    <input type="password" id="node-config-input-clientsecret">
+    <input type="password" id="node-config-input-clientsecret" />
   </div>
   <div class="form-row">
-    <label for="node-config-input-redirecturl"><i class="fa fa-plug"></i> Callback URL</label>
-    <input type="text" id="node-config-input-redirecturl">
+    <label>&nbsp;</label>
+    <a class="btn" id="node-config-start-auth" href="#" target="_blank">Authenticate with Force</a>
   </div>
 </script>
 
@@ -51,18 +48,80 @@
     color: "#48ace4",
     defaults: {
       username: { value: '', required: true },
-      loginurl: { value: "https://login.salesforce.com" },
-      redirecturl: { value: '', required: true }
+      loginurl: { value: "https://login.salesforce.com" }
     },
     credentials: {
-      password: { type: 'password', required: true },
       clientid: { type: 'password', required: true },
       clientsecret: { type: 'password', required: true }
     },
     label: function() {
       return this.username
+    },
+    oneditprepare: function() {
+        var configNode = this;
+        var id = this.id;
+        var pathname = document.location.pathname;
+        if (pathname.slice(-1) != "/") {
+            pathname += "/";
+        }
+        var callback = location.protocol + "//";
+        callback += (location.port == "")? location.hostname : location.hostname + ":" + location.port;
+        callback += pathname + "force-credentials/"+id+"/auth/callback";
+        $("#node-config-force-tooltip").html("<p>Please configure the authorized <b>Redirect URIs</b> of your app to include the following url:</p>\n<code>"+callback+"</code>");
+
+        $("#node-config-start-auth").addClass("disabled");
+
+        function updateForceAuthButton() {
+            var v1 = $("#node-config-input-clientid").val();
+            var v2 = $("#node-config-input-clientsecret").val();
+            if (v1 != "" && v2 != "") {
+                window.forceConfigNodeIntervalId = window.setTimeout(pollForceCredentialsUrl,2000);
+            }
+        }
+        $("#node-config-input-clientid").on('change keydown paste input',updateForceAuthButton);
+        $("#node-config-input-clientsecret").on('change keydown paste input',updateForceAuthButton);
+        updateForceAuthButton();
+
+        if(configNode.credentials.has_clientid && configNode.credentials.has_clientsecret){
+            window.forceConfigNodeIntervalId = window.setTimeout(pollForceCredentialsUrl,2000);
+        }
+
+        function pollForceCredentialsUrl() {
+          var clientid = $("#node-config-input-clientid").val();
+          var clientsecret = $("#node-config-input-clientsecret").val();
+          if(clientid && clientsecret){
+            var username = $("#node-config-input-username").val();
+            var loginurl = $("#node-config-input-loginurl option:selected").val();
+            var url = 'credentials/'+id+'/force-credentials?clientid='+clientid
+                      +'&clientsecret='+clientsecret
+                      +'&callback='+encodeURIComponent(callback)
+                      +'&username='+username
+                      +'&loginurl='+encodeURIComponent(loginurl);
+            $.getJSON(url,function(data) {
+                if (data.authUrl) {
+                    $("#node-config-start-auth").attr("href",data.authUrl)
+                                                .removeClass("disabled");
+                    delete window.forceConfigNodeIntervalId;
+                } else {
+                    window.forceConfigNodeIntervalId = window.setTimeout(pollForceCredentialsUrl,2000);
+                }
+            });
+          }
+        }
+
+        $("#node-config-start-auth").mousedown(function() {
+        });
+
+        $("#node-config-start-auth").click(function(e) {
+            var ahref = $("#node-config-start-auth").attr("href");
+            if (ahref === "#") {
+                e.preventDefault();
+            }
+        });
     }
   });
+
+
 </script>
 
 <script type="text/x-red" data-template-name="force in">

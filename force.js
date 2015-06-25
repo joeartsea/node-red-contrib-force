@@ -24,32 +24,104 @@ module.exports = function (RED) {
     var node = this;
     var credentials = RED.nodes.getCredentials(n.id);
     var conn = new jsforce.Connection({
-//      loginUrl: n.loginurl
-      oauth2 : {
-        clientId : credentials.clientid,
-        clientSecret : credentials.clientsecret,
-        redirectUri : n.redirecturl
-      }
+        oauth2 : {
+            clientId : credentials.clientid,
+            clientSecret : credentials.clientsecret,
+            redirectUri : null
+        }
     });
     this.login = function (callback) {
-      conn.login(n.username, credentials.password, function (err, userInfo) {
-        if (err) {
-          node.error(err.toString());
-          node.status({ fill: 'red', shape: 'ring', text: 'failed' });
-        }
-        node.status({});
-        callback(conn);
-      });
+      conn.initialize({
+          accessToken : credentials.accessToken,
+          refreshToken : credentials.refreshToken,
+          instanceUrl : credentials.instanceUrl
+        });
+      callback(conn);
     }
   }
 
+
   RED.nodes.registerType('force', ForceNode, {
     credentials: {
-      password: { type: 'password' },
       clientid: { type: 'password' },
-      clientsecret: { type: 'password' }
+      clientsecret: { type: 'password' },
+      accessToken : { type: 'password' },
+      refreshToken : { type: 'password' },
+      instanceUrl : { type: 'text' }
     }
   });
+
+  RED.httpAdmin.get('/credentials/:id/force-credentials', function(req, res) {
+    var forceConfig = RED.nodes.getNode(req.params.id);
+    var clientid,
+        clientsecret;
+    if (forceConfig && forceConfig.credentials && forceConfig.credentials.clientid) {
+        clientid = forceConfig.credentials.clientid;
+    } else {
+        clientid = req.query.clientid;
+    }
+    if (forceConfig && forceConfig.credentials && forceConfig.credentials.clientsecret) {
+        clientsecret = forceConfig.credentials.clientsecret;
+    } else {
+        clientsecret = req.query.clientsecret;
+    }
+    var credentials = {
+        clientid: clientid,
+        clientsecret: clientsecret,
+        redirectUri : req.query.callback
+    };
+    RED.nodes.addCredentials(req.params.id, credentials);
+
+    var oauth2 = new jsforce.OAuth2({
+      loginUrl: req.query.loginurl,
+      clientId : clientid,
+      redirectUri : req.query.callback
+    });
+    var authUrl = oauth2.getAuthorizationUrl();
+    if (req.query.username) authUrl = authUrl + '&login_hint=' + req.query.username;
+
+    var resData = {};
+    resData.authUrl = authUrl;
+    res.send(resData);
+  });
+
+  RED.httpAdmin.get('/force-credentials/:id/auth/callback', function(req, res) {
+    if(!req.query.code){
+        var sendHtml = "<html><head></head><body>ERROR: not return Authorization code</body></html>";
+        return res.send(sendHtml);
+    }
+    var forceConfig = RED.nodes.getCredentials(req.params.id);
+
+    var conn = new jsforce.Connection({
+        oauth2 : {
+            clientId : forceConfig.clientid,
+            clientSecret : forceConfig.clientsecret,
+            redirectUri : forceConfig.redirectUri
+        }
+    });
+
+    conn.authorize(req.query.code, function(err, userInfo) {
+        if (err) {
+          node.error(err.toString());
+          node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+          var sendHtml = "<html><head></head><body>" + err.toString() + "</body></html>";
+          return res.send(sendHtml);
+        }
+
+        var credentials = {
+            clientid: forceConfig.clientid,
+            clientsecret: forceConfig.clientsecret,
+            accessToken: conn.accessToken,
+            refreshToken: conn.refreshToken,
+            instanceUrl: conn.instanceUrl
+        };
+        RED.nodes.addCredentials(req.params.id, credentials);
+
+        var sendHtml = "<html><head></head><body>Authorised - you can close this window and return to Node-RED</body></html>";
+        res.send(sendHtml);
+      });
+  });
+
 
   function ForceInNode(n) {
     RED.nodes.createNode(this, n);
@@ -114,4 +186,5 @@ module.exports = function (RED) {
     }
   }
   RED.nodes.registerType('force in', ForceInNode);
+
 }
