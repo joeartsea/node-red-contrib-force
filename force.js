@@ -23,26 +23,47 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, n);
     var node = this;
     var credentials = RED.nodes.getCredentials(n.id);
-    var conn = new jsforce.Connection({
-        oauth2 : {
-            clientId : credentials.clientid,
-            clientSecret : credentials.clientsecret,
-            redirectUri : null
-        }
-    });
+
     this.login = function (callback) {
-      conn.initialize({
-          accessToken : credentials.accessToken,
-          refreshToken : credentials.refreshToken,
-          instanceUrl : credentials.instanceUrl
-        });
-      callback(conn);
+      if (n.logintype == "oauth") {
+          var error;
+          if (!credentials.accessToken || !credentials.instanceUrl) {
+              error = JSON.parse('["' + "No Authenticate specified" + '"]');
+          }
+          var conn = new jsforce.Connection({
+            oauth2 : {
+                clientId : credentials.clientid,
+                clientSecret : credentials.clientsecret,
+                redirectUri : null
+            }
+          });
+          conn.initialize({
+              accessToken : credentials.accessToken,
+              refreshToken : credentials.refreshToken,
+              instanceUrl : credentials.instanceUrl
+          });
+          callback(conn, error);
+
+      } else {
+          var conn = new jsforce.Connection({
+            loginUrl: n.loginurl
+          });
+          var error;
+
+          conn.login(n.username, credentials.password, function (err, userInfo) {
+            if (err) {
+              error = err;
+            }
+            callback(conn, error);
+          });
+      }
     }
   }
 
 
   RED.nodes.registerType('force', ForceNode, {
     credentials: {
+      password: { type: 'password' },
       clientid: { type: 'password' },
       clientsecret: { type: 'password' },
       accessToken : { type: 'password' },
@@ -147,12 +168,17 @@ module.exports = function (RED) {
           if (err) {
             node.error(err.toString());
             node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+          } else {
+            node.status({});
           }
-          node.status({});
-          msg.payload = result
+          msg.payload = result;
           node.send(msg);
         };
-        this.forceConfig.login(function (conn) {
+        this.forceConfig.login(function (conn, err) {
+          if(err){
+            node.sendMsg(err);
+            return;
+          }
           switch (node.operation) {
             case 'query':
               msg.payload = node.convType(msg.payload, 'string');

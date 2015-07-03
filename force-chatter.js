@@ -35,12 +35,17 @@ module.exports = function (RED) {
           if (err) {
             node.error(err.toString());
             node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+          } else {
+            node.status({});
           }
-          node.status({});
           msg.payload = result;
           node.send(msg);
         };
-        this.forceConfig.login(function (conn) {
+        this.forceConfig.login(function (conn, err) {
+          if (err) {
+            node.sendMsg(err);
+            return;
+          }
           switch (node.operation) {
             case 'get_feed':
               conn.chatter.resource("/feeds/news/me/feed-elements").retrieve(node.sendMsg);

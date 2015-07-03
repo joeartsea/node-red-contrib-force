@@ -15,6 +15,13 @@
 -->
 
 <script type="text/x-red" data-template-name="force">
+  <div class="form-row">
+    <label for="node-config-input-logintype"><i class="fa fa-plug"></i> Login Type</label>
+    <select type="text" id="node-config-input-logintype" style="width:70%">
+      <option value="soap">login By Soap</option>
+      <option value="oauth">login By OAuth2</option>
+    </select>
+  </div>
   <div class="form-tips" id="node-config-force-tooltip">
   </div>
   <div class="form-row">
@@ -28,15 +35,19 @@
     <label for="node-config-input-username"><i class="fa fa-bookmark"></i> User Name</label>
     <input type="text" id="node-config-input-username" placeholder="example@example.com" />
   </div>
-  <div class="form-row">
+  <div class="form-row input-password-row">
+    <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+    <input type="password" id="node-config-input-password">
+  </div>
+  <div class="form-row input-clientid-row">
     <label for="node-config-input-clientid"><i class="fa fa-bookmark"></i> Client Id</label>
     <input type="password" id="node-config-input-clientid" />
   </div>
-  <div class="form-row">
+  <div class="form-row input-clientsecret-row">
     <label for="node-config-input-clientsecret"><i class="fa fa-lock"></i> Client Secret</label>
     <input type="password" id="node-config-input-clientsecret" />
   </div>
-  <div class="form-row">
+  <div class="form-row input-startauth-row">
     <label>&nbsp;</label>
     <a class="btn" id="node-config-start-auth" href="#" target="_blank">Authenticate with Force</a>
   </div>
@@ -48,9 +59,11 @@
     color: "#48ace4",
     defaults: {
       username: { value: '', required: true },
-      loginurl: { value: "https://login.salesforce.com" }
+      loginurl: { value: "https://login.salesforce.com" },
+      logintype: { value: "soap" }
     },
     credentials: {
+      password: { type: 'password', required: true },
       clientid: { type: 'password', required: true },
       clientsecret: { type: 'password', required: true }
     },
@@ -116,6 +129,30 @@
             var ahref = $("#node-config-start-auth").attr("href");
             if (ahref === "#") {
                 e.preventDefault();
+            }
+        });
+
+
+        $("#node-config-input-logintype").change(function () {
+            var passwordel = $(".input-password-row");
+            var clientidel = $(".input-clientid-row");
+            var secretel = $(".input-clientsecret-row");
+            var buttonel = $(".input-startauth-row");
+            var tooltipel = $("#node-config-force-tooltip");
+
+            var id = $("#node-config-input-logintype option:selected").val();
+            if (id == 'oauth') {
+              passwordel.hide();
+              clientidel.show();
+              secretel.show();
+              buttonel.show();
+              tooltipel.show();
+            } else {
+              passwordel.show();
+              clientidel.hide();
+              secretel.hide();
+              buttonel.hide();
+              tooltipel.hide();
             }
         });
     }
