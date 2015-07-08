@@ -18,7 +18,7 @@
   <div class="form-row">
     <label for="node-config-input-logintype"><i class="fa fa-plug"></i> Login Type</label>
     <select type="text" id="node-config-input-logintype" style="width:70%">
-      <option value="soap">login By Soap</option>
+      <option value="Username-Password">login By Username-Password</option>
       <option value="oauth">login By OAuth2</option>
     </select>
   </div>
@@ -60,7 +60,7 @@
     defaults: {
       username: { value: '', required: true },
       loginurl: { value: "https://login.salesforce.com" },
-      logintype: { value: "soap" }
+      logintype: { value: "Username-Password" }
     },
     credentials: {
       password: { type: 'password', required: true },
