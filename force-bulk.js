@@ -57,20 +57,35 @@ module.exports = function (RED) {
           if (err) {
             node.error(err.toString());
             node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+          } else {
+            node.status({});
           }
-          node.status({});
           msg.payload = result;
           node.send(msg);
         };
-        this.forceConfig.login(function (conn) {
+        this.forceConfig.login(function (conn, err) {
+          if (err) {
+            node.sendMsg(err);
+            return;
+          }
           var localname = node.localfilename || msg.localfilename || '';
           if(node.polltimeout) conn.bulk.pollTimeout = node.polltimeout;
           switch (node.operation) {
             case 'query':
               msg.payload = node.convType(msg.payload, 'string');
-              conn.bulk.query(msg.payload).stream().pipe(fs.createWriteStream(localname));
-              msg.payload = 'query result saved.' + localname;
-              node.send(msg);
+              conn.bulk.load(node.sobject, "query", msg.payload, 
+                            function(err, results){
+                                if (err) {
+                                    node.sendMsg(err);
+                                } else {
+                                    var r = results[0];
+                                    var result = conn.bulk.job(r.jobId).batch(r.batchId).result(r.id);
+                                    result.stream().pipe(fs.createWriteStream(localname));
+                                    msg.payload = 'query result saved.' + localname;
+                                    node.status({});
+                                    node.send(msg);
+                                }
+                            });
               break;
             case 'insert_record':
               msg.payload = node.convType(msg.payload, 'object');
