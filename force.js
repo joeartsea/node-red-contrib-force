@@ -176,7 +176,7 @@ module.exports = function (RED) {
         };
         this.forceConfig.login(function (conn, err) {
           if(err){
-            node.sendMsg(err);
+            node.sendMsg(err, err.toString());
             return;
           }
           switch (node.operation) {
