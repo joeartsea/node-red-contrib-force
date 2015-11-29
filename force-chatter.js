@@ -25,6 +25,7 @@ module.exports = function (RED) {
     this.operation = n.operation;
     this.group = n.group;
     this.query = n.query;
+    this.to = n.to;
     this.mention = n.mention;
     this.forceConfig = RED.nodes.getNode(this.force);
 
@@ -63,7 +64,7 @@ module.exports = function (RED) {
                     messageSegments: []
                   },
                   feedElementType : 'FeedItem',
-                  subjectId: msg.topic || 'me'
+                  subjectId: node.to || msg.topic || 'me'
                 };
               var mentions = node.mention.split(",");
               for(var i=0; i<mentions.length; i++){
@@ -97,11 +98,34 @@ module.exports = function (RED) {
   RED.httpAdmin.get('/force-chatter/get-groups', function(req, res) {
     var forceCredentials = RED.nodes.getCredentials(req.query.credentials);
     var forceNode = RED.nodes.getNode(req.query.id);
-    if (!req.query.id || !req.query.credentials || !forceCredentials || !forceNode) {
+    var configNode = RED.nodes.getNode(req.query.credentials);
+    var forceConfig = null;
+
+    if (forceNode && forceNode.forceConfig) {
+        forceConfig = forceNode.forceConfig;
+    } else if (configNode) {
+        forceConfig = configNode;
+    } else {
+        forceConfig = req.query;
+        if(forceCredentials) forceConfig.credentials = forceCredentials;
+        forceConfig.login = ForceNodeLogin;
+    }
+
+    if (!req.query.id || !req.query.credentials || !forceConfig) {
       return res.send('{"error": "Missing force credentials"}');
     }
 
-    forceNode.forceConfig.login(function (conn) {
+    var credentials = {
+            password: forceConfig.credentials.password,
+            clientid: forceConfig.credentials.clientid,
+            clientsecret: forceConfig.credentials.clientsecret,
+            accessToken: forceConfig.credentials.accessToken,
+            refreshToken: forceConfig.credentials.refreshToken,
+            instanceUrl: forceConfig.credentials.instanceUrl
+        };
+    RED.nodes.addCredentials(req.query.credentials, credentials);
+
+    forceConfig.login(function (conn) {
       conn.chatter.resource("/users/me/groups").retrieve(
         function (err, result) {
           if (err) {
@@ -116,11 +140,34 @@ module.exports = function (RED) {
   RED.httpAdmin.get('/force-chatter/get-mentions', function(req, res) {
     var forceCredentials = RED.nodes.getCredentials(req.query.credentials);
     var forceNode = RED.nodes.getNode(req.query.id);
-    if (!req.query.id || !req.query.credentials || !forceCredentials || !forceNode) {
-      return res.send('{"error": "Missing force credentials"}');
+    var configNode = RED.nodes.getNode(req.query.credentials);
+    var forceConfig = null;
+
+    if (forceNode && forceNode.forceConfig) {
+        forceConfig = forceNode.forceConfig;
+    } else if (configNode) {
+        forceConfig = configNode;
+    } else {
+        forceConfig = req.query;
+        if(forceCredentials) forceConfig.credentials = forceCredentials;
+        forceConfig.login = ForceNodeLogin;
     }
 
-    forceNode.forceConfig.login(function (conn) {
+    if (!req.query.id || !req.query.credentials || !forceConfig) {
+      return res.send('{"error": "Missing force credentials"}');
+    }
+    
+    var credentials = {
+            password: forceConfig.credentials.password,
+            clientid: forceConfig.credentials.clientid,
+            clientsecret: forceConfig.credentials.clientsecret,
+            accessToken: forceConfig.credentials.accessToken,
+            refreshToken: forceConfig.credentials.refreshToken,
+            instanceUrl: forceConfig.credentials.instanceUrl
+        };
+    RED.nodes.addCredentials(req.query.credentials, credentials);
+
+    forceConfig.login(function (conn, err) {
       var resData = {"success": true};
       conn.chatter.resource("/users").retrieve(
         function (err, result) {
@@ -140,5 +187,41 @@ module.exports = function (RED) {
       });
     });
   });
+
+
+  function ForceNodeLogin(callback) {
+      if (this.logintype == "oauth") {
+          var error;
+          if (!this.credentials.accessToken || !this.credentials.instanceUrl) {
+              error = JSON.parse('["' + "No Authenticate specified" + '"]');
+          }
+          var conn = new jsforce.Connection({
+            oauth2 : {
+                clientId : this.credentials.clientid,
+                clientSecret : this.credentials.clientsecret,
+                redirectUri : null
+            }
+          });
+          conn.initialize({
+              accessToken : this.credentials.accessToken,
+              refreshToken : this.credentials.refreshToken,
+              instanceUrl : this.credentials.instanceUrl
+          });
+          callback(conn, error);
+
+      } else {
+          var conn = new jsforce.Connection({
+            loginUrl: this.loginurl
+          });
+          var error;
+
+          conn.login(this.username, this.password, function (err, userInfo) {
+            if (err) {
+              error = err;
+            }
+            callback(conn, error);
+          });
+      }
+  }
 
 }
