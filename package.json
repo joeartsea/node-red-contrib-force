@@ -4,7 +4,8 @@
   "description": "A collection of Node-RED nodes for Salesforce/force.com.",
   "dependencies": {
     "jsforce": "1.4.0",
-    "request": "2.42.0"
+    "request": "2.42.0",
+    "salesforce-signed-request": "0.0.1"
   },
   "repository": {
     "type": "git",
