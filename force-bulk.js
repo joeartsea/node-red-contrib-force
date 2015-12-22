@@ -73,7 +73,7 @@ module.exports = function (RED) {
           switch (node.operation) {
             case 'query':
               msg.payload = node.convType(msg.payload, 'string');
-              conn.bulk.load(node.sobject, "query", msg.payload, 
+              conn.bulk.load(node.sobject, "query", msg.payload,
                             function(err, results){
                                 if (err) {
                                     node.sendMsg(err);
@@ -105,7 +105,7 @@ module.exports = function (RED) {
               conn.bulk.load(node.sobject, node.operation, csvFileIn, node.sendMsg);
               break;
           }
-        });
+        }, msg);
       });
     } else {
       this.error('missing force configuration');

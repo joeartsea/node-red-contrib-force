@@ -24,10 +24,12 @@ module.exports = function (RED) {
     var node = this;
     var credentials = RED.nodes.getCredentials(n.id);
 
-    this.login = function (callback) {
+    this.login = function (callback, msg) {
+      var accessToken = msg.accessToken || credentials.accessToken;
+      var instanceUrl = msg.instanceUrl || credentials.instanceUrl;
       if (n.logintype == "oauth") {
           var error;
-          if (!credentials.accessToken || !credentials.instanceUrl) {
+          if (!accessToken || !instanceUrl) {
               error = JSON.parse('["' + "No Authenticate specified" + '"]');
           }
           var conn = new jsforce.Connection({
@@ -38,13 +40,13 @@ module.exports = function (RED) {
             }
           });
           conn.initialize({
-              accessToken : credentials.accessToken,
+              accessToken : accessToken,
               refreshToken : credentials.refreshToken,
-              instanceUrl : credentials.instanceUrl
+              instanceUrl : instanceUrl
           });
           callback(conn, error);
 
-      } else {
+      } else if (n.logintype == "Username-Password") {
           var conn = new jsforce.Connection({
             loginUrl: n.loginurl
           });
@@ -56,6 +58,12 @@ module.exports = function (RED) {
             }
             callback(conn, error);
           });
+      } else if (n.logintype == "Signed-Request") {
+          var conn = new jsforce.Connection({
+            accessToken : accessToken,
+            instanceUrl : instanceUrl
+          });
+          callback(conn, error);
       }
     }
   }
@@ -176,7 +184,7 @@ module.exports = function (RED) {
         };
         this.forceConfig.login(function (conn, err) {
           if(err){
-            node.sendMsg(err, err.toString());
+            node.sendMsg(err);
             return;
           }
           switch (node.operation) {
@@ -205,7 +213,7 @@ module.exports = function (RED) {
                 .destroy(msg.payload, node.sendMsg);
               break;
           }
-        });
+        }, msg);
       });
     } else {
       this.error('missing force configuration');

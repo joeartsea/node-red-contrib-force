@@ -20,18 +20,23 @@ module.exports = function (RED) {
 
   function ForceSignedRequestNode(n) {
     RED.nodes.createNode(this, n);
-    var node = this;
-    var clientSecret = this.credentials.clientSecret;
-    node.on('input', function (msg) {
-      var payload = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : msg.payload;
-      msg.payload = decode(payload.signed_request, clientSecret);
-      node.send(msg);
-    });
+    this.force = n.force;
+    this.forceConfig = RED.nodes.getNode(this.force);
+    if (this.forceConfig) {
+      var node = this;
+      var credentials = RED.nodes.getCredentials(this.force);
+      node.on('input', function (msg) {
+        var payload = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : msg.payload;
+        var json = decode(payload.signed_request, credentials.clientsecret);
+        msg.instanceUrl = json.client.instanceUrl;
+        msg.accessToken = json.client.oauthToken;
+        msg.payload = json;
+        node.send(msg);
+      });
+    } else {
+      this.error('missing force configuration');
+    }
   }
 
-  RED.nodes.registerType('force signed request', ForceSignedRequestNode, {
-    credentials: {
-      clientSecret: { type: 'password' }
-    }
-  });
+  RED.nodes.registerType('force signed request', ForceSignedRequestNode);
 }

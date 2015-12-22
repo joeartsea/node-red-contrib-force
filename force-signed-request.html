@@ -16,8 +16,8 @@
 
 <script type="text/x-red" data-template-name="force signed request">
   <div class="form-row">
-    <label for="node-input-clientSecret"><i class="fa fa-lock"></i> Client Secret</label>
-    <input type="password" id="node-input-clientSecret" />
+    <label for="node-input-force"><i class="fa fa-user"></i> Log in as</label>
+    <input type="text" id="node-input-force">
   </div>
   <div class="form-row">
     <label for="node-input-name"><i class="icon-tag"></i> Name</label>
@@ -30,10 +30,8 @@
     category: 'advanced',
     color: "#48ace4",
     defaults: {
+      force: { type: 'force', required: true },
       name: { value: '' }
-    },
-    credentials: {
-      clientSecret: { type: 'password', required: true }
     },
     inputs: 1,
     outputs: 1,

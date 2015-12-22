@@ -20,11 +20,12 @@
     <select type="text" id="node-config-input-logintype" style="width:70%">
       <option value="Username-Password">login By Username-Password</option>
       <option value="oauth">login By OAuth2</option>
+      <option value="Signed-Request">login By Signed-Request</option>
     </select>
   </div>
   <div class="form-tips" id="node-config-force-tooltip">
   </div>
-  <div class="form-row">
+  <div class="form-row input-loginurl-row">
     <label for="node-config-input-loginurl"><i class="fa fa-plug"></i> Login URL</label>
     <select type="text" id="node-config-input-loginurl" style="width:70%">
       <option value="https://login.salesforce.com">Production(login.salesforce.com)</option>
@@ -138,6 +139,7 @@
             var clientidel = $(".input-clientid-row");
             var secretel = $(".input-clientsecret-row");
             var buttonel = $(".input-startauth-row");
+            var loginurlel = $(".input-loginurl-row");
             var tooltipel = $("#node-config-force-tooltip");
 
             var id = $("#node-config-input-logintype option:selected").val();
@@ -147,12 +149,20 @@
               secretel.show();
               buttonel.show();
               tooltipel.show();
-            } else {
+              loginurlel.show();
+            } else if (id == 'Username-Password') {
               passwordel.show();
               clientidel.hide();
               secretel.hide();
               buttonel.hide();
+              loginurlel.show();
+            } else {
+              passwordel.hide();
+              clientidel.hide();
+              secretel.show();
+              buttonel.hide();
               tooltipel.hide();
+              loginurlel.hide();
             }
         });
     }
