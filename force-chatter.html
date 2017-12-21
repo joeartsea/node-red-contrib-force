@@ -155,11 +155,12 @@
         param = '';
     
     credentailId = chatterNode.force || configid;
-    var configNode = RED.nodes.node(configid);
-    param = '&logintype='+configNode.logintype+'&loginurl='+configNode.loginurl+'&username='+configNode.username;
-    if(configNode.credentials) param += '&password='+configNode.credentials.password;
 
     if(credentailId){
+      var configNode = RED.nodes.node(configid);
+      param = '&logintype='+configNode.logintype+'&loginurl='+configNode.loginurl+'&username='+configNode.username;
+      if(configNode.credentials) param += '&password='+configNode.credentials.password;
+
       $.getJSON('force-chatter/get-groups?id='+chatterNode.id+'&credentials='+credentailId+param,
         function(data) {
           if (data) {
@@ -220,11 +221,12 @@
         param = '';
 
     credentailId = chatterNode.force || configid;
-    var configNode = RED.nodes.node(configid);
-    param = '&logintype='+configNode.logintype+'&loginurl='+configNode.loginurl+'&username='+configNode.username;
-    if(configNode.credentials) param += '&password='+configNode.credentials.password;
 
     if(credentailId){
+      var configNode = RED.nodes.node(configid);
+      param = '&logintype='+configNode.logintype+'&loginurl='+configNode.loginurl+'&username='+configNode.username;
+      if(configNode.credentials) param += '&password='+configNode.credentials.password;
+
       $.getJSON('force-chatter/get-mentions?id='+chatterNode.id+'&credentials='+credentailId+param,
         function(data) {
           if (data) {
