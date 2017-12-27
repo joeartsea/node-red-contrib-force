@@ -32,6 +32,9 @@ module.exports = function (RED) {
         msg.accessToken = json.client.oauthToken;
         msg.payload = json;
         node.send(msg);
+        credentials.accessToken = json.client.oauthToken;
+        credentials.instanceUrl = json.client.instanceUrl;
+        RED.nodes.addCredentials(this.force, credentials);
       });
     } else {
       this.error('missing force configuration');

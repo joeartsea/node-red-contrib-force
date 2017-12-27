@@ -18,11 +18,13 @@ module.exports = function (RED) {
   'use strict';
   var jsforce = require('jsforce');
   var request = require('request');
+  var crypto = require("crypto");
 
   function ForceNode(n) {
     RED.nodes.createNode(this, n);
     var node = this;
     var credentials = RED.nodes.getCredentials(n.id);
+    this.userId = n.userId;
 
     this.login = function (callback, msg) {
       var accessToken = msg.accessToken || credentials.accessToken;
@@ -76,12 +78,13 @@ module.exports = function (RED) {
       clientsecret: { type: 'password' },
       accessToken : { type: 'password' },
       refreshToken : { type: 'password' },
-      instanceUrl : { type: 'text' }
+      instanceUrl : { type: 'text' },
+      userId : {type: 'text'}
     }
   });
 
-  RED.httpAdmin.get('/credentials/:id/force-credentials', function(req, res) {
-    var forceConfig = RED.nodes.getNode(req.params.id);
+  RED.httpAdmin.get('/force/credentials/:id/auth', function(req, res) {
+    var forceConfig = RED.nodes.getNode(req.query.id);
     var clientid,
         clientsecret;
     if (forceConfig && forceConfig.credentials && forceConfig.credentials.clientid) {
@@ -94,32 +97,46 @@ module.exports = function (RED) {
     } else {
         clientsecret = req.query.clientsecret;
     }
+
+    var node_id = req.query.id;
     var credentials = {
         clientid: clientid,
         clientsecret: clientsecret,
         redirectUri : req.query.callback
     };
-    RED.nodes.addCredentials(req.params.id, credentials);
+
+    var csrfToken = crypto.randomBytes(18).toString('base64').replace(/\//g, '-').replace(/\+/g, '_');
+    credentials.csrfToken = csrfToken;
+    res.cookie('csrf', csrfToken);
+
+    RED.nodes.addCredentials(node_id, credentials);
 
     var oauth2 = new jsforce.OAuth2({
       loginUrl: req.query.loginurl,
       clientId : clientid,
       redirectUri : req.query.callback
     });
-    var authUrl = oauth2.getAuthorizationUrl();
+    var authUrl = oauth2.getAuthorizationUrl({ state : req.query.id + ":" + csrfToken });
     if (req.query.username) authUrl = authUrl + '&login_hint=' + req.query.username;
 
-    var resData = {};
-    resData.authUrl = authUrl;
-    res.send(resData);
+    res.redirect(authUrl);
   });
 
-  RED.httpAdmin.get('/force-credentials/:id/auth/callback', function(req, res) {
+  RED.httpAdmin.get('/force/credentials/:id/auth/callback', function(req, res) {
     if(!req.query.code){
         var sendHtml = "<html><head></head><body>ERROR: not return Authorization code</body></html>";
         return res.send(sendHtml);
     }
-    var forceConfig = RED.nodes.getCredentials(req.params.id);
+    var state = req.query.state.split(':');
+    var node_id = state[0];
+    var forceConfig = RED.nodes.getCredentials(node_id);
+
+    if (!forceConfig || !forceConfig.clientid || !forceConfig.clientsecret) {
+        return res.send("ERROR: no credentials - should never happen");
+    }
+    if (state[1] !== forceConfig.csrfToken) {
+        return res.status(401).send("CSRF token mismatch, possible cross-site request forgery attempt.");
+    }
 
     var conn = new jsforce.Connection({
         oauth2 : {
@@ -142,13 +159,14 @@ module.exports = function (RED) {
             clientsecret: forceConfig.clientsecret,
             accessToken: conn.accessToken,
             refreshToken: conn.refreshToken,
-            instanceUrl: conn.instanceUrl
+            instanceUrl: conn.instanceUrl,
+            userId: userInfo.id
         };
-        RED.nodes.addCredentials(req.params.id, credentials);
+        RED.nodes.addCredentials(node_id, credentials);
 
         var sendHtml = "<html><head></head><body>Authorised - you can close this window and return to Node-RED</body></html>";
         res.send(sendHtml);
-      });
+    });
   });
 
 

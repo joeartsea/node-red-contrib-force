@@ -86,7 +86,7 @@ module.exports = function (RED) {
               conn.chatter.resource('/feed-elements').create(feedItem, node.sendMsg);
               break;
           }
-        });
+        }, msg);
       });
     } else {
       this.error('missing force configuration');
@@ -133,7 +133,7 @@ module.exports = function (RED) {
           }
           res.send(result);
       });
-    });
+    }, {});
   });
 
 
@@ -185,11 +185,13 @@ module.exports = function (RED) {
               res.send(resData);
           });
       });
-    });
+    }, {});
   });
 
 
-  function ForceNodeLogin(callback) {
+  function ForceNodeLogin(callback, msg) {
+      var accessToken = msg.accessToken || this.credentials.accessToken;
+      var instanceUrl = msg.instanceUrl || this.credentials.instanceUrl;
       if (this.logintype == "oauth") {
           var error;
           if (!this.credentials.accessToken || !this.credentials.instanceUrl) {
@@ -203,13 +205,13 @@ module.exports = function (RED) {
             }
           });
           conn.initialize({
-              accessToken : this.credentials.accessToken,
+              accessToken : accessToken,
               refreshToken : this.credentials.refreshToken,
-              instanceUrl : this.credentials.instanceUrl
+              instanceUrl : instanceUrl
           });
           callback(conn, error);
 
-      } else {
+      } else if (this.logintype == "Username-Password") {
           var conn = new jsforce.Connection({
             loginUrl: this.loginurl
           });
@@ -221,7 +223,12 @@ module.exports = function (RED) {
             }
             callback(conn, error);
           });
+      } else if (this.logintype == "Signed-Request") {
+          var conn = new jsforce.Connection({
+            accessToken : accessToken,
+            instanceUrl : instanceUrl
+          });
+          callback(conn, error);
       }
   }
-
 }
