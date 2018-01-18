@@ -192,7 +192,7 @@ module.exports = function (RED) {
       node.on('input', function (msg) {
         node.sendMsg = function (err, result) {
           if (err) {
-            node.error(err.toString());
+            node.error(err.toString(), msg);
             node.status({ fill: 'red', shape: 'ring', text: 'failed' });
           } else {
             node.status({});
