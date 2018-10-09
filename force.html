@@ -217,6 +217,11 @@
     <label for="node-input-extname"><i class="fa fa-table"></i> External ID field name</label>
     <input type="text" id="node-input-extname" placeholder="External ID field name">
   </div>
+  <div class="form-row input-maxfetch-row hidden">
+    <label for="node-input-maxfetch"><i class="fa fa-table"></i> maxFetch value</label>
+    <input type="text" id="node-input-maxfetch" placeholder="maxFetch value">
+  </div>
+
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
@@ -232,6 +237,7 @@
       operation: { value: 'query' },
       sobject: { value: '' },
       extname: { value: '' },
+      maxfetch: { value: '' },
       name: { value: '' }
     },
     inputs: 1,
@@ -247,17 +253,21 @@
     oneditprepare: function () {
       var extel = $(".input-extname-row");
       var sobjel = $(".input-sobject-row");
+      var maxfetchel = $(".input-maxfetch-row");
       $("#node-input-operation").change(function () {
         var id = $("#node-input-operation option:selected").val();
         if (id == 'query') {
           extel.hide();
           sobjel.hide();
+          maxfetchel.show();
         } else if (id == 'upsert') {
           extel.show();
           sobjel.show();
+          maxfetchel.hide();
         } else {
           extel.hide();
           sobjel.show();
+          maxfetchel.hide();
         }
       });
     }
