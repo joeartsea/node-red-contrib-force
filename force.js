@@ -175,6 +175,7 @@ module.exports = function (RED) {
     this.force = n.force;
     this.sobject = n.sobject;
     this.extname = n.extname;
+    this.maxfetch = n.maxfetch;
     this.operation = n.operation;
     this.forceConfig = RED.nodes.getNode(this.force);
     if (this.forceConfig) {
@@ -207,8 +208,20 @@ module.exports = function (RED) {
           }
           switch (node.operation) {
             case 'query':
+              var records = [];
               msg.payload = node.convType(msg.payload, 'string');
-              conn.query(msg.payload, node.sendMsg);
+//              conn.query(msg.payload, node.sendMsg);
+              var query = conn.query(msg.payload)
+                    .on("record", function(record) {
+                        records.push(record);
+                    })
+                    .on("end", function() {
+                        node.sendMsg(null, records);
+                    })
+                    .on("error", function(err) {
+                        node.sendMsg(err);
+                    })
+                    .run({ autoFetch: true, maxFetch: node.maxfetch });
               break;
             case 'create':
               msg.payload = node.convType(msg.payload, 'object');
