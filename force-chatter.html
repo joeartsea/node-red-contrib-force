@@ -53,6 +53,62 @@
   </div>
 </script>
 
+<script type="text/x-red" data-help-name="force-chatter in">
+    <p>force.com chatter node. the following process selected in <code>Operation</code>.</p>
+    <ul>
+      <li>Get Feed</li>
+      <li>Get Group Feed</li>
+      <li>Search Feed</li>
+      <li>Post Feed</li>
+    </ul>
+
+    <h3>Inputs</h3>
+      <dl class="message-properties">
+        <dt class="optional">payload
+          <span class="property-type">string</span>
+        </dt>
+        <dd> Enter a message to post. </dd>
+      </dl>
+
+    <h3>Outputs</h3>
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Outputs the execution result of the selected process.</dd>
+      </dl>
+
+    <h3>Details</h3>
+    <h4>Get Feed</h4>
+      <p> Get all feeds for logged-in users. </p>
+      <p>Store the obtained feed information in <code>msg.payload</code> and output it.</p>
+
+    <h4>Get Group Feed</h4>
+      <p> Get feed of group set to <code>Group</code>. </p>
+      <p> Set the group you want to get in <code>Group</code>. <code>Group</code> shows the group that the logged-in user is a member of.</p>
+      <p> Store the obtained group feed information in <code>msg.payload</code> and output it.</p>
+
+    <h4>Search Feed</h4>
+      <p> Search feeds with keywords set to <code>Search string</code>. </p>
+      <p> Set the keyword you want to get feed in <code>Search string</code>.</p>
+      <p> Store feed search results in <code>msg.payload</code> and output.</p>
+
+    <h4>Post Feed</h4>
+      <p> Post the message received in <code>msg.payload</code>. </p>
+      <p> Set feed post group to <code>To</code>. <code>To</code> indicates the group in which the logged-in user is a member. If it is not set, it will be posted to the person who follows the logged-in user.</p>
+      <p> <code>@Mention</code> sets the person or group that mentions the feed post. Multiple selection is possible. <code>@Mention</code> shows your organization's users and chatter groups.</p>
+      <p>Store and output the posted feed information in <code>msg.payload</code>.</p>
+
+    <h3>References</h3>
+      <ul>
+        <li>
+          <a href="https://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_responses_feed_element_page.htm">Feed Element Page</a> - See here for details on the syntax of the feed information output by get feed, get group feed, and search feed.
+        </li>
+        <li>
+          <a href="https://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_responses_feed_item.htm">Feed Item</a> - See here for details on the syntax of the feed information output by a feed post.
+        </li>
+      </ul>
+
+</script>
+
 <script type="text/javascript">
   RED.nodes.registerType('force-chatter in', {
     category: 'storage-input',
