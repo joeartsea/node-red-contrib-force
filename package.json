@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-force",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "A collection of Node-RED nodes for Salesforce/force.com.",
   "dependencies": {
     "jsforce": "1.4.0",
