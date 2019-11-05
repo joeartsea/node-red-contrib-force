@@ -53,6 +53,77 @@
   </div>
 </script>
 
+<script type="text/x-red" data-help-name="force-bulk in">
+    <p>force.com bulk node. the following process selected in <code>Operation</code>.</p>
+    <ul>
+      <li>Query</li>
+      <li>Create(Record)</li>
+      <li>Create(CSV)</li>
+      <li>Update</li>
+      <li>Create/Update</li>
+      <li>Delete</li>
+    </ul>
+
+    <h3>Inputs</h3>
+      <dl class="message-properties">
+        <dt class="optional">payload
+          <span class="property-type">string | array</span>
+        </dt>
+        <dd> Inputs the data for execute the selected process. </dd>
+      </dl>
+
+    <h3>Outputs</h3>
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">array | object</span></dt>
+        <dd>Outputs the execution result of the selected process.</dd>
+      </dl>
+
+    <h3>Details</h3>
+    <h4>Query</h4>
+      <p>Execute search with SOQL query received in <code>msg.payload</code>. The property type that can be received is a <code>string</code>.</p>
+      <p> <code>msg.payload = "select Id, Name from Account";</code> </p>
+      <p> Set the object name (API Name) of the object whose data is to be searched in <code>Sobject</code>.</p>
+      <p> Specify the CSV file name to be output to <code>Local Filename</code>. The file name can be Relative path or Absolute path.</p>
+      <p>Create a CSV file of the retrieved search results and output it to the specified file. Also, a message indicating that the file has been output is stored in <code>msg.payload</code> and output.</p>
+
+    <h4>Create(Record): </h4>
+      <p> Create new data in the set Object based on json object data received by <code>msg.payload</code>. Property type is <code>array</code>.</p>
+      <p> <code>msg.payload = [{Name: 'hoge'},{Name: 'fuga'}];</code> </p>
+      <p> Set the object name (API Name) of the object for which you want to Create data in <code>Sobject</code>.</p>
+      <p> Set polling timeout in milliseconds in <code>API Polling Timeout</code>.</p>
+      <p>The execution results of creation are stored in <code>msg.payload</code> as a json object and output.</p>
+
+    <h4>Create(CSV): </h4>
+      <p> Read the file set in <code>Local Filename</code> and create new data in the set object.</p>
+      <p> Set the object name (API Name) of the object for which you want to Create data in <code>Sobject</code>.</p>
+      <p> Set polling timeout in milliseconds in <code>API Polling Timeout</code>.</p>
+      <p> Specify the CSV file name of the data to be created in <code>Local Filename</code>. The file name can be Relative path or Absolute path.</p>
+      <p>The execution results of creation are stored in <code>msg.payload</code> as a json object and output.</p>
+
+    <h4>Update: </h4>
+      <p> Read the file set in <code>Local Filename</code> and update the data of the set object.</p>
+      <p> Set the object name (API Name) of the object whose data is to be updated in <code>Sobject</code>.</p>
+      <p> Set polling timeout in milliseconds in <code>API Polling Timeout</code>.</p>
+      <p> Specify the CSV file name of the data to be updated in <code>Local Filename</code>. The file name can be Relative path or Absolute path.</p>
+      <p>The execution results of update are stored in <code>msg.payload</code> as a json object and output.</p>
+
+    <h4>Create/Update: </h4>
+      <p> Read the file set in <code>Local Filename</code> and create or update the data of the set object
+      <p>In <code>Sobject</code>, set the object name (API Name) of the object to create or update data.</p>
+      <p>In <code>External ID field name</code>, set the field name (API Name) of the external ID field that is the key to determine data creation or update.</p>
+      <p> Set polling timeout in milliseconds in <code>API Polling Timeout</code>.</p>
+      <p> Specify the CSV file name of the data to create or update in <code>Local Filename</code>. The file name can be Relative path or Absolute path.</p>
+      <p>The execution results of creation or update are stored in <code>msg.payload</code> as a json object and output.</p>
+
+    <h4>Delete: </h4>
+      <p> Read the file set in <code>Local Filename</code> and delete the data of the set object.</p>
+      <p> Set the object name (API Name) of the object whose data is to be deleted in <code>Sobject</code>.</p>
+      <p> Set polling timeout in milliseconds in <code>API Polling Timeout</code>.</p>
+      <p> Specify the CSV file name of the data to be deleted in <code>Local Filename</code>. The file name can be Relative path or Absolute path.</p>
+      <p>The execution results of deletion are stored in <code>msg.payload</code> as a json object and output.</p>
+
+</script>
+
 <script type="text/javascript">
   RED.nodes.registerType('force-bulk in', {
     category: 'storage-input',
