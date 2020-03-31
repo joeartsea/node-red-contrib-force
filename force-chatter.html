@@ -42,10 +42,25 @@
     <select id="node-input-to" >
     </select>
   </div>
+  <div class="form-row search-row">
+    <input id="searchInput" name="searchInput" onkeyup="searchMention()" type="text" placeholder="Search for Users..">
+  </div>
   <div class="form-row input-mention-row hidden">
     <label for="node-input-mention"><i class="fa fa-group"></i> @Mention</label>
-    <select id="node-input-mention" multiple="multiple" size="5">
+    <select id="node-input-mention" onchange="selectedMention()" multiple="multiple" size="5" style="width: 283px">
     </select>
+  </div>
+  <div class="form-row load-more-row" style="padding:10px; float:left">
+    <button class="loadUserBtn" id="node-input-loadUser" style="border:none; color: #fff; background-color: #48ace4; border-radius: 5px">Load more Users</button>
+    <button class="loadGroupBtn" id="node-input-loadGroup" style="border:none; color: #fff; background-color: #48ace4; border-radius: 5px">Load more Groups</button>
+  </div>
+  <div class="form-row load-selected-row">
+    <div style="font-weight: bold;" >Selected Users: 
+      <p style="font-weight: normal;" id="usersSelected"></p>
+    </div>
+    <div style="font-weight: bold;" >Selected Groups: 
+      <p style="font-weight: normal;" id="groupsSelected"></p>
+    </div> 
   </div>
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
@@ -54,248 +69,398 @@
 </script>
 
 <script type="text/x-red" data-help-name="force-chatter in">
-    <p>force.com chatter node. the following process selected in <code>Operation</code>.</p>
+  <p>force.com chatter node. the following process selected in <code>Operation</code>.</p>
+  <ul>
+    <li>Get Feed</li>
+    <li>Get Group Feed</li>
+    <li>Search Feed</li>
+    <li>Post Feed</li>
+  </ul>
+
+  <h3>Inputs</h3>
+    <dl class="message-properties">
+      <dt class="optional">payload
+        <span class="property-type">string</span>
+      </dt>
+      <dd> Enter a message to post. </dd>
+    </dl>
+
+  <h3>Outputs</h3>
+    <dl class="message-properties">
+      <dt>payload <span class="property-type">object</span></dt>
+      <dd>Outputs the execution result of the selected process.</dd>
+    </dl>
+
+  <h3>Details</h3>
+  <h4>Get Feed</h4>
+    <p> Get all feeds for logged-in users. </p>
+    <p>Store the obtained feed information in <code>msg.payload</code> and output it.</p>
+
+  <h4>Get Group Feed</h4>
+    <p> Get feed of group set to <code>Group</code>. </p>
+    <p> Set the group you want to get in <code>Group</code>. <code>Group</code> shows the group that the logged-in user is a member of.</p>
+    <p> Store the obtained group feed information in <code>msg.payload</code> and output it.</p>
+
+  <h4>Search Feed</h4>
+    <p> Search feeds with keywords set to <code>Search string</code>. </p>
+    <p> Set the keyword you want to get feed in <code>Search string</code>.</p>
+    <p> Store feed search results in <code>msg.payload</code> and output.</p>
+
+  <h4>Post Feed</h4>
+    <p> Post the message received in <code>msg.payload</code>. </p>
+    <p> Set feed post group to <code>To</code>. <code>To</code> indicates the group in which the logged-in user is a member. If it is not set, it will be posted to the person who follows the logged-in user.</p>
+    <p> <code>@Mention</code> sets the person or group that mentions the feed post. Multiple selection is possible. <code>@Mention</code> shows your organization's users and chatter groups.</p>
+    <p>Store and output the posted feed information in <code>msg.payload</code>.</p>
+
+  <h3>References</h3>
     <ul>
-      <li>Get Feed</li>
-      <li>Get Group Feed</li>
-      <li>Search Feed</li>
-      <li>Post Feed</li>
+      <li>
+        <a href="https://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_responses_feed_element_page.htm">Feed Element Page</a> - See here for details on the syntax of the feed information output by get feed, get group feed, and search feed.
+      </li>
+      <li>
+        <a href="https://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_responses_feed_item.htm">Feed Item</a> - See here for details on the syntax of the feed information output by a feed post.
+      </li>
     </ul>
-
-    <h3>Inputs</h3>
-      <dl class="message-properties">
-        <dt class="optional">payload
-          <span class="property-type">string</span>
-        </dt>
-        <dd> Enter a message to post. </dd>
-      </dl>
-
-    <h3>Outputs</h3>
-      <dl class="message-properties">
-        <dt>payload <span class="property-type">object</span></dt>
-        <dd>Outputs the execution result of the selected process.</dd>
-      </dl>
-
-    <h3>Details</h3>
-    <h4>Get Feed</h4>
-      <p> Get all feeds for logged-in users. </p>
-      <p>Store the obtained feed information in <code>msg.payload</code> and output it.</p>
-
-    <h4>Get Group Feed</h4>
-      <p> Get feed of group set to <code>Group</code>. </p>
-      <p> Set the group you want to get in <code>Group</code>. <code>Group</code> shows the group that the logged-in user is a member of.</p>
-      <p> Store the obtained group feed information in <code>msg.payload</code> and output it.</p>
-
-    <h4>Search Feed</h4>
-      <p> Search feeds with keywords set to <code>Search string</code>. </p>
-      <p> Set the keyword you want to get feed in <code>Search string</code>.</p>
-      <p> Store feed search results in <code>msg.payload</code> and output.</p>
-
-    <h4>Post Feed</h4>
-      <p> Post the message received in <code>msg.payload</code>. </p>
-      <p> Set feed post group to <code>To</code>. <code>To</code> indicates the group in which the logged-in user is a member. If it is not set, it will be posted to the person who follows the logged-in user.</p>
-      <p> <code>@Mention</code> sets the person or group that mentions the feed post. Multiple selection is possible. <code>@Mention</code> shows your organization's users and chatter groups.</p>
-      <p>Store and output the posted feed information in <code>msg.payload</code>.</p>
-
-    <h3>References</h3>
-      <ul>
-        <li>
-          <a href="https://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_responses_feed_element_page.htm">Feed Element Page</a> - See here for details on the syntax of the feed information output by get feed, get group feed, and search feed.
-        </li>
-        <li>
-          <a href="https://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_responses_feed_item.htm">Feed Item</a> - See here for details on the syntax of the feed information output by a feed post.
-        </li>
-      </ul>
-
 </script>
 
 <script type="text/javascript">
-  RED.nodes.registerType('force-chatter in', {
-    category: 'storage-input',
+  var globalVal = true;
+  RED.nodes.registerType("force-chatter in", {
+    category: "storage-input",
     color: "#48ace4",
     defaults: {
-      force: { type: 'force', required: true },
-      operation: { value: 'get_feed' },
-      group: { value: '' },
-      query: { value: '' },
-      to: { value: '' },
-      mention: { value: '' },
-      name: { value: '' }
+      force: { type: "force", required: true },
+      operation: { value: "get_feed" },
+      group: { value: "" },
+      query: { value: "" },
+      to: { value: "" },
+      mention: { value: "" },
+      name: { value: "" },
+      loadUser: { value: "0" },
+      loadGroup: { value: "0" }
     },
     inputs: 1,
     outputs: 1,
-    icon: 'force.png',
+    icon: "force.png",
     label: function () {
       var forceNode = RED.nodes.node(this.force);
-      return this.name || 'force-chatter';
+      return this.name || "force-chatter";
     },
     labelStyle: function () {
-      return this.name ? 'node_label_italic' : '';
+      return this.name ? "node_label_italic" : "";
     },
     oneditprepare: function () {
+      if (globalVal) {
+        var val = parseInt($("#node-input-loadUser").attr('value', 0));
+        var val2 = parseInt($("#node-input-loadGroup").attr('value', 0));
+        globalVal = false;
+      }
       chatterNode = RED.nodes.node(this.id);
       var groupel = $(".input-group-row");
       var queryel = $(".input-query-row");
       var toel = $(".input-to-row");
       var mentionel = $(".input-mention-row");
+      var loadel = $(".load-more-row");
+      var searchel = $(".search-row");
+      var selectel = $(".load-selected-row");
+      var selected = selectedMention();
+      val = parseInt($("#node-input-loadUser").val());
+      val2 = parseInt($("#node-input-loadGroup").val());
+      $("#node-input-loadUser")
+        .button()
+        .click(function () {
+          var valTemp = ++val;
+          $("#node-input-loadUser").val(valTemp);
+          pollChatterMention2(valTemp, val2);
+        });
+      $("#node-input-loadGroup")
+        .button()
+        .click(function () {
+          var val2Temp = ++val2;
+          $("#node-input-loadGroup").val(val2Temp);
+          pollChatterMention2(val, val2Temp);
+        });
       $("#node-input-operation").change(function () {
         if (window.chatterNodeIntervalId) {
-            window.clearTimeout(window.chatterNodeIntervalId);
-            delete window.chatterNodeIntervalId;
+          window.clearTimeout(window.chatterNodeIntervalId);
+          delete window.chatterNodeIntervalId;
         }
         var id = $("#node-input-operation option:selected").val();
-        if(id != chatterNode.operation){
+        if (id != chatterNode.operation) {
           $("#node-input-group").val("");
           $("#node-input-query").val("");
           $("#node-input-to").val("");
           $("#node-input-mention").val("");
         }
-        if (id == 'get_group') {
+        if (id == "get_group") {
           groupel.show();
           queryel.hide();
           toel.hide();
+          loadel.show();
+          searchel.hide();
+          $(".loadUserBtn").hide();
+          selectel.hide();
           mentionel.hide();
-          window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup,2000);
-        } else if(id == 'search_feed') {
+          window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup, 2000);
+        } else if (id == "search_feed") {
           groupel.hide();
           queryel.show();
           toel.hide();
+          loadel.hide();
+          searchel.hide();
           mentionel.hide();
-        } else if(id == 'post_feed') {
+          selectel.hide();
+        } else if (id == "post_feed") {
           groupel.hide();
           queryel.hide();
           toel.show();
+          $(".loadUserBtn").show();
+          selectel.show();
+          loadel.show();
+          searchel.show();
           mentionel.show();
-          window.chatterNodeIntervalId = window.setTimeout(pollChatterMention,2000);
+          window.chatterNodeIntervalId = window.setTimeout(pollChatterMention, 2000);
         } else {
+          selectel.hide();
           groupel.hide();
           queryel.hide();
           toel.hide();
+          searchel.hide();
           mentionel.hide();
+          loadel.hide();
         }
       });
     },
     oneditsave: function () {
+      val = parseInt($("#node-input-loadUser").val());
+      val2 = parseInt($("#node-input-loadGroup").val());
       var id = $("#node-input-operation option:selected").val();
-      if(id == 'post_feed') {
+      if (id == "post_feed") {
         var selected = $("#node-input-mention").val();
-        if(selected){
+        if (selected) {
           chatterNode.mention = selected.join(",");
         } else {
           chatterNode.mention = "";
         }
-        
+
         if (window.chatterNodeIntervalId) {
-            window.clearTimeout(window.chatterNodeIntervalId);
-            delete window.chatterNodeIntervalId;
+          window.clearTimeout(window.chatterNodeIntervalId);
+          delete window.chatterNodeIntervalId;
         }
       }
     }
   });
-
   var chatterNode;
   function updateGroupList(lists) {
     var grouplist = $("#node-input-group");
     grouplist.children("option").remove();
     grouplist.append('<option value=""> == select Group == </option>');
-    $.each(lists.groups, function(i, opt){
-      grouplist.append('<option value="' + opt.id + '">' + opt.name + '</option>');
+    $.each(lists.groups, function (i, opt) {
+      grouplist.append(
+        '<option value="' + opt.id + '">' + opt.name + "</option>"
+      );
     });
     grouplist.val(chatterNode.group);
   }
 
   function pollChatterGroup() {
     var configid = $("#node-input-force").val();
-        configid = configid.replace("_ADD_", "");
+    configid = configid.replace("_ADD_", "");
     var credentailId = null,
-        param = '';
-    
+      param = "";
+
     credentailId = chatterNode.force || configid;
 
-    if(credentailId){
+    if (credentailId) {
       var configNode = RED.nodes.node(configid);
-      param = '&logintype='+configNode.logintype+'&loginurl='+configNode.loginurl+'&username='+configNode.username;
-      if(configNode.credentials) param += '&password='+configNode.credentials.password;
+      param = "&logintype=" + configNode.logintype + "&loginurl=" + configNode.loginurl + "&username=" + configNode.username;
+      if (configNode.credentials) param += "&password=" + configNode.credentials.password;
 
-      $.getJSON('force-chatter/get-groups?id='+chatterNode.id+'&credentials='+credentailId+param,
-        function(data) {
+      $.getJSON("force-chatter/get-groups?id=" + chatterNode.id + "&credentials=" + credentailId + param,
+        function (data) {
           if (data) {
             updateGroupList(data);
             delete window.chatterNodeIntervalId;
           } else {
-            window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup,2000);
+            window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup, 2000);
           }
-      });
-    }else{
-      window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup,2000);
+        });
+    } else {
+      window.chatterNodeIntervalId = window.setTimeout(pollChatterGroup, 2000);
     }
   }
-
-
+  var listUser = []
+  var listGroup = []
+  var tempUser = {}
+  var tempGroup = {}
+  var firstFeedItem = {}
+  var flag = true
+  var flagNextPageTokenUser = true
+  var flagNextPageTokenGroup = true
   function updateMentionList(lists) {
+    if (lists.users.nextPageToken == null || !flagNextPageTokenUser) {
+      $("#node-input-loadUser").attr("disabled", true).css('background', '#727272')
+      flagNextPageTokenUser = false
+    }
+    if (lists.groups.nextPageToken == null || !flagNextPageTokenGroup) {
+      $("#node-input-loadGroup").attr("disabled", true).css('background', '#727272')
+      flagNextPageTokenGroup = false
+    }
     var mentionlist = $("#node-input-mention"),
-        users = lists.users,
-        groups = lists.groups,
-        opts = "";
+      users = lists.users,
+      groups = lists.groups,
+      opts = "";
     mentionlist.children("optgroup").remove();
+    if (flag) {
+      firstFeedItem = users.users
+    }
+    if (JSON.stringify(tempUser) != JSON.stringify(users.users) && JSON.stringify(firstFeedItem) != JSON.stringify(users.users) || flag) {
+      tempUser = users.users
+      $.each(tempUser, function (i, opt) {
+        listUser.push(opt)
+      })
+    }
 
+    if (JSON.stringify(tempGroup) != JSON.stringify(groups.groups)) {
+      if (flag) {
+        tempGroup = groups.groups
+        $.each(tempGroup, function (i, opt) {
+          listGroup.push(opt)
+        })
+      } else {
+        if (JSON.stringify(tempGroup[0].id) !== JSON.stringify(groups.groups[0].id)) {
+          tempGroup = groups.groups
+          $.each(tempGroup, function (i, opt) {
+            listGroup.push(opt)
+          })
+        }
+      }
+
+    }
+    flag = false
+
+    $("#node-input-loadUser").text("Load more Users (" + listUser.length + ")").css('padding', '10px')
     opts += '<optgroup label="Users">';
-    $.each(users.users, function(i, opt){
-      opts += '<option value="' + opt.id + '">' + opt.name + '</option>';
+    $.each(listUser, function (i, opt) {
+      opts += '<option value="' + opt.id + '">' + opt.name + " [ " + opt.userType + " ]" + '</option>';
     });
     opts += '</optgroup>';
 
+    $("#node-input-loadGroup").text("Load more Groups (" + listGroup.length + ")").css('padding', '10px')
     opts += '<optgroup label="Groups">';
-    $.each(groups.groups, function(i, opt){
+    $.each(listGroup, function (i, opt) {
       opts += '<option value="' + opt.id + '">' + opt.name + '</option>';
     });
     opts += '</optgroup>';
     mentionlist.append(opts);
 
     mentionlist.val(chatterNode.mention.split(','));
+    var selectedItems = [];
   }
+  function searchMention() {
+    var keyword = document.getElementById("searchInput").value;
+    var selects = $("#node-input-mention").children("optgroup")[0].childNodes
 
+    selects.forEach(function (select) {
+      var txt = select.innerText;
+      if (txt.substring(0, keyword.length).toLowerCase() !== keyword.toLowerCase() && keyword.trim() !== "") {
+        $("#node-input-mention option[value='" + select.value + "']").hide()
+      } else {
+        $("#node-input-mention option[value='" + select.value + "']").show()
+      }
+    })
+  }
+  function selectedMention() {
+    var selectedUsers = "";
+    var selectedGroups = "";
+    $("#node-input-mention option:selected").each(function () {
+      var label = $(this).closest('optgroup').attr('label');
+      if (label == "Users") {
+        selectedUsers += $(this).text() + ", ";
+      } else {
+        selectedGroups += $(this).text() + ", ";
+      }
+    });
+    $("#usersSelected").text(selectedUsers);
+    $("#groupsSelected").text(selectedGroups);
+  }
+  var listGroupTo = [];
+  var tempGroupTo = {};
   function updateToList(lists) {
     var tolist = $("#node-input-to"),
-         opts = "";
+      opts = "";
     tolist.children("option").remove();
     tolist.children("optgroup").remove();
     opts = '<option value=""> == select To == </option>';
     opts += '<optgroup label="Groups">';
-    $.each(lists.groups.groups, function(i, opt){
-      opts += '<option value="' + opt.id + '">' + opt.name + '</option>';
+    if (JSON.stringify(tempGroupTo) != JSON.stringify(lists.groups.groups)) {
+      tempGroupTo = lists.groups.groups
+      $.each(tempGroupTo, function (i, opt) {
+        listGroupTo.push(opt)
+      })
+    }
+    $.each(listGroupTo, function (i, opt) {
+      opts += '<option value="' + opt.id + '">' + opt.name + "</option>";
     });
-    opts += '</optgroup>';
+    opts += "</optgroup>";
     tolist.append(opts);
     tolist.val(chatterNode.to);
   }
-
   function pollChatterMention() {
     var configid = $("#node-input-force").val();
-        configid = configid.replace("_ADD_", "");
+    configid = configid.replace("_ADD_", "");
     var credentailId = null,
-        param = '';
+      param = "";
 
     credentailId = chatterNode.force || configid;
 
-    if(credentailId){
+    if (credentailId) {
       var configNode = RED.nodes.node(configid);
-      param = '&logintype='+configNode.logintype+'&loginurl='+configNode.loginurl+'&username='+configNode.username;
-      if(configNode.credentials) param += '&password='+configNode.credentials.password;
+      param = "&logintype=" + configNode.logintype + "&loginurl=" + configNode.loginurl + "&username=" + configNode.username;
+      if (configNode.credentials) param += "&password=" + configNode.credentials.password;
 
-      $.getJSON('force-chatter/get-mentions?id='+chatterNode.id+'&credentials='+credentailId+param,
-        function(data) {
+      $.getJSON("force-chatter/get-mentions?id=" + chatterNode.id + "&credentials=" + credentailId + param + "&userPage=0" + "&groupPage=0",
+        function (data) {
           if (data) {
             updateMentionList(data);
             updateToList(data);
+            selectedMention();
             delete window.chatterNodeIntervalId;
           } else {
-            window.chatterNodeIntervalId = window.setTimeout(pollChatterMention,2000);
+            window.chatterNodeIntervalId = window.setTimeout(pollChatterMention, 2000);
           }
-      });
-    }else{
-      window.chatterNodeIntervalId = window.setTimeout(pollChatterMention,2000);
+        });
+    } else {
+      window.chatterNodeIntervalId = window.setTimeout(pollChatterMention, 2000);
     }
   }
 
+  function pollChatterMention2(userPage, groupPage) {
+    var configid = $("#node-input-force").val();
+    configid = configid.replace("_ADD_", "");
+    var credentailId = null,
+      param = "";
+
+    credentailId = chatterNode.force || configid;
+
+    if (credentailId) {
+      var configNode = RED.nodes.node(configid);
+      param = "&logintype=" + configNode.logintype + "&loginurl=" + configNode.loginurl + "&username=" + configNode.username;
+      if (configNode.credentials)
+        param += "&password=" + configNode.credentials.password;
+
+      $.getJSON("force-chatter/get-mentions?id=" + chatterNode.id + "&credentials=" + credentailId + param + "&userPage=" + userPage + "&groupPage=" + groupPage, function (data) {
+        if (data) {
+          updateMentionList(data);
+          updateToList(data);
+          delete window.chatterNodeIntervalId;
+        } else {
+          window.chatterNodeIntervalId = window.setTimeout(pollChatterMention2(userPage, groupPage), 2000);
+        }
+      }
+      );
+    } else {
+      window.chatterNodeIntervalId = window.setTimeout(pollChatterMention2(userPage, groupPage), 2000);
+    }
+  }
 </script>
