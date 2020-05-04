@@ -15,9 +15,9 @@
  **/
 
 module.exports = function (RED) {
-  'use strict';
-  var jsforce = require('jsforce');
-  var request = require('request');
+  "use strict";
+  var jsforce = require("jsforce");
+  var request = require("request");
 
   function ForceChatterInNode(n) {
     RED.nodes.createNode(this, n);
@@ -31,11 +31,11 @@ module.exports = function (RED) {
 
     if (this.forceConfig) {
       var node = this;
-      node.on('input', function (msg) {
+      node.on("input", function (msg) {
         this.sendMsg = function (err, result) {
           if (err) {
             node.error(err.toString());
-            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+            node.status({ fill: "red", shape: "ring", text: "failed" });
           } else {
             node.status({});
           }
@@ -48,67 +48,67 @@ module.exports = function (RED) {
             return;
           }
           switch (node.operation) {
-            case 'get_feed':
+            case "get_feed":
               conn.chatter.resource("/feeds/news/me/feed-elements").retrieve(node.sendMsg);
               break;
-            case 'get_group':
+            case "get_group":
               var url = "/feeds/record/" + node.group + "/feed-elements";
               conn.chatter.resource(url).retrieve(node.sendMsg);
               break;
-            case 'search_feed':
-              conn.chatter.resource('/feed-elements', { q: node.query }).retrieve(node.sendMsg);
+            case "search_feed":
+              conn.chatter.resource("/feed-elements", { q: node.query }).retrieve(node.sendMsg);
               break;
-            case 'post_feed':
+            case "post_feed":
               var feedItem = {
-                  body: {
-                    messageSegments: []
-                  },
-                  feedElementType : 'FeedItem',
-                  subjectId: node.to || msg.topic || 'me'
-                };
+                body: {
+                  messageSegments: []
+                },
+                feedElementType: "FeedItem",
+                subjectId: node.to || msg.topic || "me"
+              };
               var mentions = node.mention.split(",");
-              for(var i=0; i<mentions.length; i++){
-                if(mentions[i]){
+              for (var i = 0; i < mentions.length; i++) {
+                if (mentions[i]) {
                   feedItem.body.messageSegments.push({
-                    type: 'Mention',
+                    type: "Mention",
                     id: mentions[i]
                   });
                   feedItem.body.messageSegments.push({
-                    type: 'Text',
-                    text: '\n'
+                    type: "Text",
+                    text: "\n"
                   });
                 }
               }
               feedItem.body.messageSegments.push({
-                type: 'Text',
+                type: "Text",
                 text: msg.payload
               });
-              conn.chatter.resource('/feed-elements').create(feedItem, node.sendMsg);
+              conn.chatter.resource("/feed-elements").create(feedItem, node.sendMsg);
               break;
           }
         }, msg);
       });
     } else {
-      this.error('missing force configuration');
+      this.error("missing force configuration");
     }
   }
-  RED.nodes.registerType('force-chatter in', ForceChatterInNode);
+  RED.nodes.registerType("force-chatter in", ForceChatterInNode);
 
 
-  RED.httpAdmin.get('/force-chatter/get-groups', function(req, res) {
+  RED.httpAdmin.get("/force-chatter/get-groups", function (req, res) {
     var forceCredentials = RED.nodes.getCredentials(req.query.credentials);
     var forceNode = RED.nodes.getNode(req.query.id);
     var configNode = RED.nodes.getNode(req.query.credentials);
     var forceConfig = null;
 
     if (forceNode && forceNode.forceConfig) {
-        forceConfig = forceNode.forceConfig;
+      forceConfig = forceNode.forceConfig;
     } else if (configNode) {
-        forceConfig = configNode;
+      forceConfig = configNode;
     } else {
-        forceConfig = req.query;
-        if(forceCredentials) forceConfig.credentials = forceCredentials;
-        forceConfig.login = ForceNodeLogin;
+      forceConfig = req.query;
+      if (forceCredentials) forceConfig.credentials = forceCredentials;
+      forceConfig.login = ForceNodeLogin;
     }
 
     if (!req.query.id || !req.query.credentials || !forceConfig) {
@@ -116,13 +116,13 @@ module.exports = function (RED) {
     }
 
     var credentials = {
-            password: forceConfig.credentials.password,
-            clientid: forceConfig.credentials.clientid,
-            clientsecret: forceConfig.credentials.clientsecret,
-            accessToken: forceConfig.credentials.accessToken,
-            refreshToken: forceConfig.credentials.refreshToken,
-            instanceUrl: forceConfig.credentials.instanceUrl
-        };
+      password: forceConfig.credentials.password,
+      clientid: forceConfig.credentials.clientid,
+      clientsecret: forceConfig.credentials.clientsecret,
+      accessToken: forceConfig.credentials.accessToken,
+      refreshToken: forceConfig.credentials.refreshToken,
+      instanceUrl: forceConfig.credentials.instanceUrl
+    };
     RED.nodes.addCredentials(req.query.credentials, credentials);
 
     forceConfig.login(function (conn) {
@@ -132,103 +132,109 @@ module.exports = function (RED) {
             return res.send('{"error": "error:' + err.toString() + '"}');
           }
           res.send(result);
-      });
+        });
     }, {});
   });
 
-
-  RED.httpAdmin.get('/force-chatter/get-mentions', function(req, res) {
+  RED.httpAdmin.get("/force-chatter/get-mentions", function (req, res) {
     var forceCredentials = RED.nodes.getCredentials(req.query.credentials);
     var forceNode = RED.nodes.getNode(req.query.id);
     var configNode = RED.nodes.getNode(req.query.credentials);
     var forceConfig = null;
-
+    var splitUser = res.socket.parser.incoming._parsedUrl.path.split(
+      "&userPage="
+    );
+    var userPage = splitUser[1];
+    var splitGroup = res.socket.parser.incoming._parsedUrl.path.split(
+      "&groupPage="
+    );
+    var groupPage = splitGroup[1];
     if (forceNode && forceNode.forceConfig) {
-        forceConfig = forceNode.forceConfig;
+      forceConfig = forceNode.forceConfig;
     } else if (configNode) {
-        forceConfig = configNode;
+      forceConfig = configNode;
     } else {
-        forceConfig = req.query;
-        if(forceCredentials) forceConfig.credentials = forceCredentials;
-        forceConfig.login = ForceNodeLogin;
+      forceConfig = req.query;
+      if (forceCredentials) forceConfig.credentials = forceCredentials;
+      forceConfig.login = ForceNodeLogin;
     }
 
     if (!req.query.id || !req.query.credentials || !forceConfig) {
       return res.send('{"error": "Missing force credentials"}');
     }
-    
+
     var credentials = {
-            password: forceConfig.credentials.password,
-            clientid: forceConfig.credentials.clientid,
-            clientsecret: forceConfig.credentials.clientsecret,
-            accessToken: forceConfig.credentials.accessToken,
-            refreshToken: forceConfig.credentials.refreshToken,
-            instanceUrl: forceConfig.credentials.instanceUrl
-        };
+      password: forceConfig.credentials.password,
+      clientid: forceConfig.credentials.clientid,
+      clientsecret: forceConfig.credentials.clientsecret,
+      accessToken: forceConfig.credentials.accessToken,
+      refreshToken: forceConfig.credentials.refreshToken,
+      instanceUrl: forceConfig.credentials.instanceUrl
+    };
     RED.nodes.addCredentials(req.query.credentials, credentials);
 
-    forceConfig.login(function (conn, err) {
-      var resData = {"success": true};
-      conn.chatter.resource("/users").retrieve(
+    forceConfig.login(function (conn, err, n) {
+      var resData = { success: true };
+      conn.chatter.resource("/users?page=" + userPage + "&pageSize=50").retrieve(
         function (err, result) {
           if (err) {
             return res.send('{"error": "error:' + err.toString() + '"}');
           }
           resData.users = result;
-          
-          conn.chatter.resource("/groups").retrieve(
+
+
+          conn.chatter.resource("/groups?page=" + groupPage + "&pageSize=1").retrieve(
             function (err, result) {
               if (err) {
                 return res.send('{"error": "error:' + err.toString() + '"}');
               }
               resData.groups = result;
               res.send(resData);
-          });
-      });
+            });
+        });
     }, {});
   });
 
-
   function ForceNodeLogin(callback, msg) {
-      var accessToken = msg.accessToken || this.credentials.accessToken;
-      var instanceUrl = msg.instanceUrl || this.credentials.instanceUrl;
-      if (this.logintype == "oauth") {
-          var error;
-          if (!this.credentials.accessToken || !this.credentials.instanceUrl) {
-              error = JSON.parse('["' + "No Authenticate specified" + '"]');
-          }
-          var conn = new jsforce.Connection({
-            oauth2 : {
-                clientId : this.credentials.clientid,
-                clientSecret : this.credentials.clientsecret,
-                redirectUri : null
-            }
-          });
-          conn.initialize({
-              accessToken : accessToken,
-              refreshToken : this.credentials.refreshToken,
-              instanceUrl : instanceUrl
-          });
-          callback(conn, error);
-
-      } else if (this.logintype == "Username-Password") {
-          var conn = new jsforce.Connection({
-            loginUrl: this.loginurl
-          });
-          var error;
-
-          conn.login(this.username, this.password, function (err, userInfo) {
-            if (err) {
-              error = err;
-            }
-            callback(conn, error);
-          });
-      } else if (this.logintype == "Signed-Request") {
-          var conn = new jsforce.Connection({
-            accessToken : accessToken,
-            instanceUrl : instanceUrl
-          });
-          callback(conn, error);
+    var accessToken = msg.accessToken || this.credentials.accessToken;
+    var instanceUrl = msg.instanceUrl || this.credentials.instanceUrl;
+    if (this.logintype == "oauth") {
+      var error;
+      if (!this.credentials.accessToken || !this.credentials.instanceUrl) {
+        error = JSON.parse('["' + "No Authenticate specified" + '"]');
       }
+      var conn = new jsforce.Connection({
+        oauth2: {
+          clientId: this.credentials.clientid,
+          clientSecret: this.credentials.clientsecret,
+          redirectUri: null
+        }
+      });
+      conn.initialize({
+        accessToken: accessToken,
+        refreshToken: this.credentials.refreshToken,
+        instanceUrl: instanceUrl
+      });
+      callback(conn, error);
+
+    } else if (this.logintype == "Username-Password") {
+      var conn = new jsforce.Connection({
+        loginUrl: this.loginurl
+      });
+      var error;
+
+      conn.login(this.username, this.password, function (err, userInfo) {
+        if (err) {
+          error = err;
+        }
+        callback(conn, error);
+      });
+    } else if (this.logintype == "Signed-Request") {
+      var conn = new jsforce.Connection({
+        accessToken: accessToken,
+        instanceUrl: instanceUrl
+      });
+      callback(conn, error);
+    }
   }
-}
+};
