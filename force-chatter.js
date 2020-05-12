@@ -183,7 +183,7 @@ module.exports = function (RED) {
           resData.users = result;
 
 
-          conn.chatter.resource("/groups?page=" + groupPage + "&pageSize=1").retrieve(
+          conn.chatter.resource("/groups?page=" + groupPage + "&pageSize=50").retrieve(
             function (err, result) {
               if (err) {
                 return res.send('{"error": "error:' + err.toString() + '"}');
