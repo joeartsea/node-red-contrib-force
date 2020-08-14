@@ -59,76 +59,76 @@ module.exports = function (RED) {
             case "search_feed":
               conn.chatter.resource("/feed-elements", { q: node.query }).retrieve(node.sendMsg);
               break;
-              case "post_feed":
-                var feedItem = {
-                  body: {
-                    messageSegments: []
-                  },
-                  feedElementType: "FeedItem",
-                  subjectId: node.to || msg.topic || "me"
-                };
-                var mentions = node.mention.split(",");
-                for (var i = 0; i < mentions.length; i++) {
-                  if (mentions[i]) {
-                    feedItem.body.messageSegments.push({
-                      type: "Mention",
-                      id: mentions[i]
-                    });
-                    feedItem.body.messageSegments.push({
-                      type: "Text",
-                      text: "\n"
-                    });
-                  }
-                }
-                feedItem.body.messageSegments.push({
-                  type: "Text",
-                  text: msg.payload
-                });
-                
-                if (msg.filename) {
-                  var filename = msg.filename.replace(/^.*[\\\/]/, '')
-                  
-                  //register photo
-                  feedItem.capabilities = {
-                    content:{
-                      description: msg.payload,
-                      title: filename
-                    }
-                  };
-                  var options = {
-                    method: "POST",
-                    url: `${conn.instanceUrl}/services/data/v${conn.version}/chatter/feed-elements`,
-                    headers: {
-                      Authorization: `Bearer ${conn.accessToken}`,
-                    },
-                    formData: {
-                      feedElementFileUpload: {
-                        value: fs.createReadStream(msg.filename),
-                        options: {
-                          filename: filename,
-                          contentType: "application/octet-stream",
-                        },
-                      },
-                      json: {
-                        value: JSON.stringify(feedItem),
-                        options: {
-                          contentType: "application/json; charset=UTF-8",
-                        },
-                      },
-                      feedElementType: "FeedItem",
-                      subjectId: node.to || msg.topic || "me",
-                    },
-                  };
-                  
-                  request(options, function (error, response) {
-                    if (error) throw new Error(error);
-                    msg.payload = JSON.parse(response.body);
-                    node.send(msg);
+            case "post_feed":
+              var feedItem = {
+                body: {
+                  messageSegments: []
+                },
+                feedElementType: "FeedItem",
+                subjectId: node.to || msg.topic || "me"
+              };
+              var mentions = node.mention.split(",");
+              for (var i = 0; i < mentions.length; i++) {
+                if (mentions[i]) {
+                  feedItem.body.messageSegments.push({
+                    type: "Mention",
+                    id: mentions[i]
                   });
-                } else {
-                  conn.chatter.resource("/feed-elements").create(options, node.sendMsg);
+                  feedItem.body.messageSegments.push({
+                    type: "Text",
+                    text: "\n"
+                  });
                 }
-                break;
+              }
+              feedItem.body.messageSegments.push({
+                type: "Text",
+                text: msg.payload
+              });
+              
+              if (msg.filename) {
+                var filename = msg.filename.replace(/^.*[\\\/]/, '')
+                
+                //register photo
+                feedItem.capabilities = {
+                  content:{
+                    description: msg.payload,
+                    title: filename
+                  }
+                };
+                var options = {
+                  method: "POST",
+                  url: `${conn.instanceUrl}/services/data/v${conn.version}/chatter/feed-elements`,
+                  headers: {
+                    Authorization: `Bearer ${conn.accessToken}`,
+                  },
+                  formData: {
+                    feedElementFileUpload: {
+                      value: fs.createReadStream(msg.filename),
+                      options: {
+                        filename: filename,
+                        contentType: "application/octet-stream",
+                      },
+                    },
+                    json: {
+                      value: JSON.stringify(feedItem),
+                      options: {
+                        contentType: "application/json; charset=UTF-8",
+                      },
+                    },
+                    feedElementType: "FeedItem",
+                    subjectId: node.to || msg.topic || "me",
+                  },
+                };
+                
+                request(options, function (error, response) {
+                  if (error) throw new Error(error);
+                  msg.payload = JSON.parse(response.body);
+                  node.send(msg);
+                });
+              } else {
+                conn.chatter.resource("/feed-elements").create(options, node.sendMsg);
+              }
+              break;
           }
         }, msg);
       });
