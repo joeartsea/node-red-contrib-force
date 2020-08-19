@@ -126,7 +126,7 @@ module.exports = function (RED) {
                   node.send(msg);
                 });
               } else {
-                conn.chatter.resource("/feed-elements").create(options, node.sendMsg);
+                conn.chatter.resource("/feed-elements").create(feedItem, node.sendMsg);
               }
               break;
           }
