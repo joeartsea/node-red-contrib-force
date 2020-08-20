@@ -18,6 +18,7 @@ module.exports = function (RED) {
   "use strict";
   var jsforce = require("jsforce");
   var request = require("request");
+  var fs = require("fs");
 
   function ForceChatterInNode(n) {
     RED.nodes.createNode(this, n);
@@ -83,7 +84,50 @@ module.exports = function (RED) {
                 type: "Text",
                 text: msg.payload
               });
-              conn.chatter.resource("/feed-elements").create(feedItem, node.sendMsg);
+              
+              if (msg.filename) {
+                var filename = msg.filename.replace(/^.*[\\\/]/, '')
+                
+                //register photo
+                feedItem.capabilities = {
+                  content:{
+                    description: msg.payload,
+                    title: filename
+                  }
+                };
+                var options = {
+                  method: "POST",
+                  url: `${conn.instanceUrl}/services/data/v${conn.version}/chatter/feed-elements`,
+                  headers: {
+                    Authorization: `Bearer ${conn.accessToken}`,
+                  },
+                  formData: {
+                    feedElementFileUpload: {
+                      value: fs.createReadStream(msg.filename),
+                      options: {
+                        filename: filename,
+                        contentType: "application/octet-stream",
+                      },
+                    },
+                    json: {
+                      value: JSON.stringify(feedItem),
+                      options: {
+                        contentType: "application/json; charset=UTF-8",
+                      },
+                    },
+                    feedElementType: "FeedItem",
+                    subjectId: node.to || msg.topic || "me",
+                  },
+                };
+                
+                request(options, function (error, response) {
+                  if (error) throw new Error(error);
+                  msg.payload = JSON.parse(response.body);
+                  node.send(msg);
+                });
+              } else {
+                conn.chatter.resource("/feed-elements").create(feedItem, node.sendMsg);
+              }
               break;
           }
         }, msg);
