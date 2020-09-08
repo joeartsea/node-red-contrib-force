@@ -85,14 +85,12 @@ module.exports = function (RED) {
                 text: msg.payload
               });
               
-              if (msg.filename) {
-                var filename = msg.filename.replace(/^.*[\\\/]/, '')
-                
+              if (msg.filename && msg.binaryBuffer) {
                 //register photo
                 feedItem.capabilities = {
                   content:{
                     description: msg.payload,
-                    title: filename
+                    title: msg.filename
                   }
                 };
                 var options = {
@@ -103,9 +101,9 @@ module.exports = function (RED) {
                   },
                   formData: {
                     feedElementFileUpload: {
-                      value: fs.createReadStream(msg.filename),
+                      value: msg.binaryBuffer,
                       options: {
-                        filename: filename,
+                        filename: msg.filename,
                         contentType: "application/octet-stream",
                       },
                     },
