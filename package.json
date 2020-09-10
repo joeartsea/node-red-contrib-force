@@ -23,7 +23,8 @@
       "forcedotcom": "force.js",
       "forcedotcom-bulk": "force-bulk.js",
       "forcedotcom-signed-request": "force-signed-request.js",
-      "chatter": "force-chatter.js"
+      "chatter": "force-chatter.js",
+      "chatter-content": "force-chatter-content.js"
     }
   },
   "author": {
