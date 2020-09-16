@@ -55,12 +55,12 @@
     <button class="loadGroupBtn" id="node-input-loadGroup" style="border:none; color: #fff; background-color: #48ace4; border-radius: 5px">Load more Groups</button>
   </div>
   <div class="form-row load-selected-row">
-    <div style="font-weight: bold;" >Selected Users: 
+    <div style="font-weight: bold;" >Selected Users:
       <p style="font-weight: normal;" id="usersSelected"></p>
     </div>
-    <div style="font-weight: bold;" >Selected Groups: 
+    <div style="font-weight: bold;" >Selected Groups:
       <p style="font-weight: normal;" id="groupsSelected"></p>
-    </div> 
+    </div>
   </div>
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
@@ -83,6 +83,14 @@
         <span class="property-type">string</span>
       </dt>
       <dd> Enter a message to post. </dd>
+      <dt class="optional">filename
+        <span class="property-type">string</span>
+      </dt>
+      <dd> Enter the name of the file to posted. </dd>
+      <dt class="optional">binaryBuffer
+        <span class="property-type">buffer</span>
+      </dt>
+      <dd> Enter the file to posted in a buffer format. </dd>
     </dl>
 
   <h3>Outputs</h3>
@@ -107,9 +115,10 @@
     <p> Store feed search results in <code>msg.payload</code> and output.</p>
 
   <h4>Post Feed</h4>
-    <p> Post the message received in <code>msg.payload</code>. </p>
+    <p> Post the message received in <code>msg.payload</code>. Also, if <code>msg.filename</code> and <code>msg.binaryBuffer</code> are received, it will post a message with the files attached.</p>
     <p> Set feed post group to <code>To</code>. <code>To</code> indicates the group in which the logged-in user is a member. If it is not set, it will be posted to the person who follows the logged-in user.</p>
     <p> <code>@Mention</code> sets the person or group that mentions the feed post. Multiple selection is possible. <code>@Mention</code> shows your organization's users and chatter groups.</p>
+    <p> <code>@Mention</code> user group choices can be filtered by the characters entered in the text box above (forward matching). <b>Selected Users</b> and <b>Selected Groups</b> will show the names of the selected users and groups.</p>
     <p>Store and output the posted feed information in <code>msg.payload</code>.</p>
 
   <h3>References</h3>

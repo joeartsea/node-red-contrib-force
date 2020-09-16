@@ -13,6 +13,14 @@
           <span class="property-type">文字列</span>
         </dt>
         <dd> 投稿するメッセージを入力します。 </dd>
+        <dt class="optional">filename
+          <span class="property-type">文字列</span>
+        </dt>
+        <dd> 投稿するファイル名を入力します。 </dd>
+        <dt class="optional">binaryBuffer
+          <span class="property-type">バッファ</span>
+        </dt>
+        <dd> 投稿するファイルをバッファ形式で入力します。 </dd>
       </dl>
 
     <h3>出力</h3>
@@ -37,9 +45,10 @@
       <p>フィードの検索結果を<code>msg.payload</code>に格納して出力します。</p>
 
     <h4>フィード投稿</h4>
-      <p> <code>msg.payload</code>で受け取ったメッセージをフィード投稿します。 </p>
+      <p> <code>msg.payload</code>で受け取ったメッセージをフィード投稿します。 また、<code>msg.filename</code>と<code>msg.binaryBuffer</code>を受け取った場合、ファイルを添付したメッセージを投稿します。</p>
       <p> <code>To</code>にフィードの投稿先グループを設定します。<code>To</code>には、ログインユーザがメンバーになっているグループを選択肢に示します。未設定の場合、ログインユーザをフォローする人に投稿されます。</p>
       <p> <code>@Mention</code>にフィードの投稿をメンションする人やグループを設定します。複数選択可能です。<code>@Mention</code>には、組織のユーザとチャターグループを選択肢に示します。</p>
+      <p> <code>@Mention</code>のユーザグループ選択肢は、上のテキストボックスに入力した文字で絞り込むことができます(前方一致)。<b>Selected Users</b>や<b>Selected Groups</b>には、選択済のユーザ名やグループ名を表示します。</p>
       <p>投稿したフィード情報を<code>msg.payload</code>に格納して出力します。</p>
 
     <h3>参照</h3>
